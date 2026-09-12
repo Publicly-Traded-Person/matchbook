@@ -4,7 +4,11 @@ A Discord bot that introduces two people and then schedules the call.
 
 **Status: design spec only. There is no code yet.** This repository exists so the
 design can be argued with before anything gets built. If you have opinions, open
-an issue. Read the spec: **[`docs/design.md`](docs/design.md)**
+an issue. Read the spec: **[`docs/design.md`](docs/design.md)**. Decisions
+already folded into it are filed as issues labelled
+[`decision`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Adecision),
+one each, so you can argue with one without diffing the whole document. How
+changes land: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Where this came from
 
@@ -122,4 +126,4 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
 AGPL-3.0. Self-host it freely. If you run a modified version as a service to
 other people, publish your changes.
 
-Built by [Quarterly Systems](https://quarterly.systems).
+Built by [KmikeyM](https://kmikeym.com).

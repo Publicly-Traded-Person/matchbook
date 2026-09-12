@@ -581,9 +581,11 @@ real data-protection obligation that a self-hosted tool does not carry.
 
 ## 11. Repo, license, branding
 
-Public repo at `Publicly-Traded-Person/matchbook`, branded Quarterly Systems in
-the README rather than KmikeyM, since a general-purpose tool reads strangely to a
-stranger when it wears one person's ticker.
+Public repo at `Publicly-Traded-Person/matchbook`, credited to KmikeyM. An
+earlier draft argued for Quarterly Systems branding on the grounds that a
+general tool reads strangely wearing one person's ticker; Mike reversed that
+(#7). The README tells the story as KmikeyM's because it is, and the tool being
+general does not make its builder anonymous.
 
 **AGPL-3.0.** Self-host freely; run a modified version as a network service to
 other people and you publish your changes. This keeps the tool genuinely free for
