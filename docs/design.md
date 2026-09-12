@@ -52,7 +52,8 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 - Recurring pairing rounds on a configured cadence
 - Scored matching with three bundled strategies and weighted composition
 - Private thread per pairing
-- Proposed meeting time, negotiation, lock-in
+- Per-member weekly availability (presets plus a custom editor)
+- Proposed meeting time drawn from real mutual availability, negotiation, lock-in
 - .ics generation, Discord scheduled event, temporary private voice channel
 - Single follow-up ("did you two connect?") feeding outcome data back into scoring
 - SQLite storage behind an interface, every row scoped by `guild_id`
@@ -67,7 +68,10 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 - Any LLM in the matching path
 - Free-text time parsing (selection from offered slots only)
 - Group sizes beyond 2, except one group of 3 when the count is odd
-- Per-member availability calendars
+- Calendar integration (reading real free/busy from Google Calendar or an .ics
+  subscription). The weekly availability mask is in; live calendar access is not,
+  because it costs OAuth, per-provider integrations, a genuine privacy surface,
+  and it makes a self-hoster obtain API credentials to run a coffee bot.
 
 ### Explicitly deferred, with a known home
 
@@ -96,7 +100,15 @@ interface Strategy {
 
 Bundled: `never-met` (1 if never paired, decaying toward 0 with recency of last
 pairing), `interest-overlap` (Jaccard similarity over self-declared tags),
+`schedulable` (share of the week both members are actually available, see §5),
 `round-robin` (deterministic rotation, ignores everything else).
+
+`schedulable` is the clearest argument for scoring over a boolean. Availability
+could have been a filter applied after matching, which would exclude constrained
+members from rounds. As a scorer it does the opposite: it steers someone with
+narrow availability toward a partner they can genuinely meet, while the matcher's
+guarantee that everyone appears exactly once per round means narrow availability
+never benches anybody.
 
 Composition is a weighted sum from config, normalized to 0..1:
 `never-met * 0.7 + interest-overlap * 0.3`.
@@ -185,10 +197,33 @@ created
   -> expired              (no activity at all, archive quietly)
 ```
 
-**Slot proposal.** Given both members' timezones, find candidate 30-minute slots
-in the next 3 to 10 days where the local hour is within 09:00-21:00 for both,
-preferring 18:00-21:00. Propose one. On "Pick another time", offer five
-alternatives as a select menu.
+**Availability.** A week is 168 hours, so each member's availability is a 168-bit
+weekly mask at hourly granularity, index 0 being Monday 00:00 in their own local
+time. Finding when two people can meet is a bitwise AND. It is instant, it is a
+few dozen bytes on the member row, and it replaces the hardcoded civil-hours
+window rather than supplementing it.
+
+**The mask is stored as local intent and projected to UTC at match time.** Storing
+UTC directly would leave a member's "weekdays 9 to 5" sitting on the wrong hours
+the moment they change timezone. Storing the local weekly pattern alongside the
+timezone means the blackout travels with them automatically, which is the only
+behavior anyone would expect from a declaration like "not during my workday."
+
+**Entering it must not involve parsing English**, for the same reason free-text
+time entry was rejected. `/availability` offers four presets covering most
+people, `Weekdays 9 to 5` / `Evenings only` / `Weekends only` / `Anytime is fine`,
+plus a custom path that is two Discord select menus, days and then hours. The
+chosen preset is remembered so reopening the menu shows current state.
+
+**Slot proposal.** AND the two masks, project to UTC, and take candidate
+30-minute slots in the next 3 to 10 days that fall inside the shared hours,
+preferring evenings local to both. Propose one. On "Pick another time", offer up
+to five alternatives from the same shared set as a select menu. Calls are 30
+minutes and the mask is hourly, so proposals land on the hour.
+
+**Empty overlap** is a real outcome, not an error. A pairing with no shared hours
+falls through to the `released` path below, and the message says why rather than
+merely stepping back: no time works for both of you, the thread is yours.
 
 **Negotiation limit.** Each side gets one counter-proposal. After two rounds the
 pairing releases rather than continuing to negotiate. Two rounds is generous;
@@ -240,6 +275,7 @@ column into live data is a painful migration; adding it now costs one word.
 ```
 guilds(guild_id PK, created_at)
 members(guild_id, discord_user_id, state, timezone, tags, avoid_notes,
+        availability_mask, availability_preset,
         silent_streak, checkin_sent_at, joined_at,
         PRIMARY KEY(guild_id, discord_user_id))
 rounds(id PK, guild_id, scheduled_for, state, created_at)
@@ -255,6 +291,12 @@ flagged, so `/forget` is a real deletion. `silent_streak` counts consecutive
 pairings with no thread message and no follow-up answer; any reply resets it to
 zero, and reaching two triggers the check-in described in §4a.
 
+`availability_mask` is 168 characters of `0` or `1`, index 0 being Monday 00:00
+in the member's local time. A packed representation would be 21 bytes instead of
+168, which is not a saving worth making: the readable form can be inspected in a
+database client without tooling, and debugging a scheduling complaint is much
+likelier than running out of disk.
+
 **Durable scheduling.** Rounds are rows with a `next_run_at` and a ticker polls
 for what is due. Not an in-process timer. This survives a restart, and it scales
 from one guild to a thousand unchanged. Correctness first, scale as a side effect.
@@ -262,8 +304,8 @@ from one guild to a thousand unchanged. Correctness first, scale as a side effec
 ## 7. Discord surface
 
 **Member commands:** `/join` (modal: timezone, optional interests, optional
-avoid-notes; re-running it edits rather than duplicates), `/timezone`, `/pause`,
-`/resume`, `/forget`.
+avoid-notes; re-running it edits rather than duplicates), `/timezone`,
+`/availability`, `/pause`, `/resume`, `/forget`.
 
 **Admin commands:** `/matchbook config`, `/matchbook run` (trigger a round now),
 `/matchbook status`.
@@ -293,6 +335,12 @@ strategy; composed weights always produce a value in 0..1.
 
 **Scheduling** state machine is exhaustively tested over its transition table,
 including both release paths and the negotiation limit.
+
+**Availability**: mask intersection is commutative; a member marked available
+everywhere never constrains a pair; a member marked available nowhere always
+produces the empty-overlap path; changing timezone moves the projected UTC hours
+by exactly the offset delta and leaves the stored local mask untouched; the
+`schedulable` score equals shared hours over 168 and stays in 0..1.
 
 **Enrollment hygiene**: a single reply resets the streak; the check-in fires at
 most once per streak; seven days of silence after a check-in auto-pauses; a

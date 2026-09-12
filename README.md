@@ -63,6 +63,12 @@ private voice channel that opens itself ten minutes early. "Sort out a time
 between you" looks like politeness and functions as an obstacle. Dialup understood
 this. It just called you.
 
+The two ideas meet in one place. You tell Matchbook when not to bother you, as a
+weekly pattern in your own local time, and that availability is not a filter
+applied after matching. It is a scorer applied during it. Someone who is only
+free on weekend mornings does not get excluded from rounds, they get paired with
+whoever else is free on weekend mornings.
+
 ## How it differs from what exists
 
 |  | Typical coffee-chat bot | Matchbook |
@@ -101,7 +107,10 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
 7. **Biweekly by default rather than weekly.** With `n` members you exhaust every
    novel pairing in `n-1` rounds, so a twelve-person server running weekly is out
    of new introductions in eleven weeks. Is biweekly the right shipped default?
-8. **Self-hosting story.** Clone, edit one TOML file, `docker compose up`. If you
+8. **Availability is hourly, as a 168-bit weekly mask.** No half-hours, no
+   one-off exceptions, no real calendar. Is hourly granularity enough, and is a
+   recurring weekly pattern the right model for how people are actually busy?
+9. **Self-hosting story.** Clone, edit one TOML file, `docker compose up`. If you
    would not run this, say what stops you.
 
 ## License
