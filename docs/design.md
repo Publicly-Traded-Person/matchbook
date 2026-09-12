@@ -163,9 +163,26 @@ sends one DM:
 > You've been matched twice without a reply. Want to stay in?
 > `[ Keep me in ]`  `[ Pause me ]`
 
-No answer within seven days auto-pauses them. `/resume` restores standing
-enrollment with history intact. The check-in fires at most once per silent
-streak, never on a schedule, and a single reply resets the streak to zero.
+No answer within seven days auto-pauses them. The check-in fires at most once per
+silent streak, never on a schedule, and a single reply resets the streak to zero.
+
+**Coming back.** `/resume` restores standing enrollment, and so does `/join`.
+Two commands, one outcome, because a returning member's model of the interface
+is "I am rejoining" and ours is "there is a state flag," and when those disagree
+the interface should bend. `/join` while paused resumes immediately and names the
+next round date; it does not reopen the setup form, because those questions were
+already answered and making a returning member refill a form is a strange way to
+say welcome back. `/availability` and `/timezone` remain available for anything
+that changed.
+
+**Pausing is not forgetting.** History survives a pause, which matters more than
+it sounds: `never-met` still knows who a returning member has already talked to,
+so nobody comes back and is immediately re-introduced to the same person.
+`/forget` is the real deletion and is a different door.
+
+**Returning resets `silent_streak` to zero.** A member auto-paused for going
+quiet who came back still sitting at two strikes would be one missed reply from
+being auto-paused again, which is a trap rather than hygiene.
 
 This is hygiene, not enforcement. It costs one counter on the member row and
 reuses the outcome data already collected in §5.
@@ -344,7 +361,9 @@ by exactly the offset delta and leaves the stored local mask untouched; the
 
 **Enrollment hygiene**: a single reply resets the streak; the check-in fires at
 most once per streak; seven days of silence after a check-in auto-pauses; a
-paused member never appears in a round; `/resume` restores history intact.
+paused member never appears in a round; `/resume` and `/join` are equivalent for
+a paused member and both restore history intact; returning zeroes
+`silent_streak`; a forgotten member who rejoins starts with no history at all.
 
 **End to end** runs a full round against a fake Discord adapter and a synthetic
 20-member fixture guild, with no network.
