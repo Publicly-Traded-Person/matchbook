@@ -94,7 +94,14 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
    stale, but costs five extra taps. Wrong trade?
 5. **The follow-up fires only for locked calls**, so a pairing that released and
    then met anyway is invisible in the numbers. Worth measuring?
-6. **Self-hosting story.** Clone, edit one TOML file, `docker compose up`. If you
+6. **Auto-pause after two silent pairings.** Standing enrollment fills with
+   ghosts because ignoring a bot is easier than telling it no, and a listed but
+   absent member burns a real participant's turn. Two strikes and one check-in:
+   too aggressive, or not aggressive enough?
+7. **Biweekly by default rather than weekly.** With `n` members you exhaust every
+   novel pairing in `n-1` rounds, so a twelve-person server running weekly is out
+   of new introductions in eleven weeks. Is biweekly the right shipped default?
+8. **Self-hosting story.** Clone, edit one TOML file, `docker compose up`. If you
    would not run this, say what stops you.
 
 ## License

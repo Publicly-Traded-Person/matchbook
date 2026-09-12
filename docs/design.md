@@ -47,7 +47,8 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 
 ### In, v1
 
-- Opt-in / pause / leave / forget via slash commands
+- Standing opt-in, pause, resume, forget via slash commands
+- Auto-pause after two silent pairings, with one check-in first
 - Recurring pairing rounds on a configured cadence
 - Scored matching with three bundled strategies and weighted composition
 - Private thread per pairing
@@ -128,6 +129,47 @@ Odd participant count: match on n-1, then attach the unmatched participant to
 whichever existing pair yields the highest mean score, forming one group of
 three. Nobody is ever benched, and the triad is not told it is the remainder.
 
+## 4a. Enrollment and hygiene
+
+**Enrollment is standing.** `/join` once and you are in every round until you
+`/pause`. No weekly opt-in, no renewal step, no recurring ask. This matches how
+the 2019 Dialup line worked and it is the entire ergonomic premise: the tool
+should cost nothing after the first thirty seconds.
+
+**Standing enrollment has one failure mode and it is fatal if ignored.** People
+opt in at peak enthusiasm. Weeks later, someone who no longer wants introductions
+will not type `/pause`, because ignoring a bot is easier than telling it no. They
+go quiet instead. A listed-but-absent member is worse than a departed one: every
+round they are matched, they burn a real participant's entire turn. A pool of
+nominally-active ghosts looks healthy in the numbers right up until nobody is
+meeting anybody.
+
+**So the bot declines to assume consent it has not seen evidence for.** After two
+consecutive pairings with no message in the thread and no follow-up answer, it
+sends one DM:
+
+> You've been matched twice without a reply. Want to stay in?
+> `[ Keep me in ]`  `[ Pause me ]`
+
+No answer within seven days auto-pauses them. `/resume` restores standing
+enrollment with history intact. The check-in fires at most once per silent
+streak, never on a schedule, and a single reply resets the streak to zero.
+
+This is hygiene, not enforcement. It costs one counter on the member row and
+reuses the outcome data already collected in §5.
+
+**Cadence and pool size.** With `n` participants a round consumes `n/2` pairings
+and `n(n-1)/2` distinct pairs exist, so novel pairings exhaust in `n-1` rounds.
+Twelve members running weekly exhaust in eleven weeks, after which `never-met`
+has nothing left to distinguish and the bot reads to members as getting worse.
+
+**The shipped default is therefore biweekly, not weekly.** It doubles the runway
+at half the ask, and it compounds: the scoring model needs accumulated outcomes
+to beat random, and biweekly rounds with high completion teach it faster than
+weekly rounds where half the pairings ghost. Cadence is per-server config and the
+README documents the `n-1` arithmetic so an adopter with 200 members knows to
+turn it up.
+
 ## 5. Scheduling model
 
 Pairing state machine:
@@ -198,7 +240,8 @@ column into live data is a painful migration; adding it now costs one word.
 ```
 guilds(guild_id PK, created_at)
 members(guild_id, discord_user_id, state, timezone, tags, avoid_notes,
-        joined_at, PRIMARY KEY(guild_id, discord_user_id))
+        silent_streak, checkin_sent_at, joined_at,
+        PRIMARY KEY(guild_id, discord_user_id))
 rounds(id PK, guild_id, scheduled_for, state, created_at)
 pairings(id PK, guild_id, round_id, thread_id, state, created_at)
 pairing_members(pairing_id, discord_user_id)
@@ -208,7 +251,9 @@ outcomes(pairing_id, discord_user_id, connected, answered_at)
 ```
 
 `members.state` is one of `active | paused`. A member who leaves is deleted, not
-flagged, so `/forget` is a real deletion.
+flagged, so `/forget` is a real deletion. `silent_streak` counts consecutive
+pairings with no thread message and no follow-up answer; any reply resets it to
+zero, and reaching two triggers the check-in described in §4a.
 
 **Durable scheduling.** Rounds are rows with a `next_run_at` and a ticker polls
 for what is due. Not an in-process timer. This survives a restart, and it scales
@@ -248,6 +293,10 @@ strategy; composed weights always produce a value in 0..1.
 
 **Scheduling** state machine is exhaustively tested over its transition table,
 including both release paths and the negotiation limit.
+
+**Enrollment hygiene**: a single reply resets the streak; the check-in fires at
+most once per streak; seven days of silence after a check-in auto-pauses; a
+paused member never appears in a round; `/resume` restores history intact.
 
 **End to end** runs a full round against a fake Discord adapter and a synthetic
 20-member fixture guild, with no network.
