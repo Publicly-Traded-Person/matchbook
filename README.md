@@ -8,12 +8,15 @@ an issue. Read the spec: **[`docs/design.md`](docs/design.md)**
 
 ## Where this came from
 
-In June 2019, KmikeyM shareholders voted on
-[a weekly Dialup line](https://kmikeym.com/questions/146). Dialup was an app by
-Max Hawkins and Danielle Baskin that phoned you out of the blue and connected you
-at random to someone else in your group. The vote passed with 62% yes, which is a
-narrow margin around here, and then it worked. Shareholders who had only ever
-seen each other's usernames on a trade ended up on the phone together.
+Dialup was an app by Max Hawkins and Danielle Baskin. It phoned you out of the
+blue and connected you at random to someone else in your group. We had nothing to
+do with building it. We were customers.
+
+What we did was vote. In June 2019 KmikeyM shareholders passed
+[a vote to start a weekly KmikeyM line on it](https://kmikeym.com/questions/146),
+62% yes, which is a narrow margin around here. Then it worked. Shareholders who
+had only ever seen each other's usernames on a trade ended up on the phone
+together.
 
 It ran until Dialup shut down as a service. Nobody did anything wrong. The thing
 simply stopped existing, and a piece of how this market's shareholders knew each
