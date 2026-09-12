@@ -9,7 +9,10 @@ Any change that alters what the bot does is filed as an issue labelled
 `decision` before it is written into the spec. The issue states the decision,
 where in the spec it lands, why, the alternative that was not chosen, and what
 would reverse it. The commit that folds it into `docs/design.md` references the
-issue. Wording fixes and typos do not need this; behavior does.
+issue ("Folds in #12"), and does not close it: a folded decision is still an
+arguable one. Decision issues close when the code implementing them lands, or
+when a later decision supersedes them. Wording fixes and typos do not need any
+of this; behavior does.
 
 This exists because the spec's first day produced eleven internal
 contradictions from eight edits that were each correct for the question that

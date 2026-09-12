@@ -1,4 +1,4 @@
-# Matchbook
+# 🔥 Matchbook
 
 A Discord bot that introduces two people and then schedules the call.
 
