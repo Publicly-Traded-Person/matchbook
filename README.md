@@ -1,6 +1,6 @@
 # Matchbook
 
-A Discord bot that introduces two people a week and then schedules the call.
+A Discord bot that introduces two people and then schedules the call.
 
 **Status: design spec only. There is no code yet.** This repository exists so the
 design can be argued with before anything gets built. If you have opinions, open
@@ -76,12 +76,13 @@ whoever else is free on weekend mornings.
 | Model | Scheduled group voice event, or a DM and good luck | One introduction, one scheduled 1:1 call |
 | Matching input | Meeting history, a boolean | Composable numeric scorers |
 | Scheduling | Fixed hour, attend or miss it | Proposed time per pair, negotiable, .ics issued |
-| Delivery | Direct message | Private thread, because DMs between strangers can be blocked |
+| Delivery | A voice lobby (event bots) or a DM (Donut-style) | Private thread, because DMs between strangers can be blocked |
 | Source | Usually closed | AGPL-3.0 |
 
-One caveat on that table: it is accurate about the one bot we studied closely. We
-have not surveyed the category. If your favorite already solves something in the
-right-hand column, tell us and we will fix the table.
+One caveat on that table: the left column blends the one bot we studied closely
+with what we know of the Donut model secondhand. We have not surveyed the
+category. If your favorite already solves something in the right-hand column,
+tell us and we will fix the table.
 
 ## What feedback would actually help
 
@@ -95,9 +96,10 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
    under about 50 participants per round. Where does that break?
 3. **The negotiation limit is one counter-proposal per side**, then the pairing
    releases and the two people are left to their own devices. Too strict?
-4. **Timezone is stored at join rather than derived from availability.** The
-   alternative, a grid of slots each person marks, is more accurate and never goes
-   stale, but costs five extra taps. Wrong trade?
+4. **Availability is a standing weekly pattern plus a declared timezone, not a
+   per-pairing poll.** The alternative, a grid of candidate slots each person
+   marks for every introduction, is more accurate and never goes stale, but
+   costs five extra taps every time. Wrong trade?
 5. **The follow-up fires only for locked calls**, so a pairing that released and
    then met anyway is invisible in the numbers. Worth measuring?
 6. **Auto-pause after two ignored check-ins, with a partner's confirmation
