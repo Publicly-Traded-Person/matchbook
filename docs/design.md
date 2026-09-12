@@ -48,7 +48,8 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 ### In, v1
 
 - Standing opt-in, pause, resume, forget via slash commands
-- Auto-pause after two silent pairings, with one check-in first
+- Auto-pause after two ignored check-ins, where a partner's confirmation counts
+  as evidence a member attended
 - Recurring pairing rounds on a configured cadence
 - Scored matching with three bundled strategies and weighted composition
 - Private thread per pairing
@@ -156,15 +157,42 @@ round they are matched, they burn a real participant's entire turn. A pool of
 nominally-active ghosts looks healthy in the numbers right up until nobody is
 meeting anybody.
 
-**So the bot declines to assume consent it has not seen evidence for.** After two
-consecutive pairings with no message in the thread and no follow-up answer, it
-sends one DM:
+**So the bot declines to assume consent it has not seen evidence for.** The hard
+part is measuring the right thing. "Did not respond to the bot" and "did not
+participate" are different, and confusing them is how a tool ejects someone who
+showed up to every call and simply never taps buttons.
 
-> You've been matched twice without a reply. Want to stay in?
+**A pairing counts as silent for a member only if nothing indicates they were
+there.** Any of the following clears it:
+
+- they posted in the thread
+- they tapped anything: confirmed the proposed time, countered it, or answered
+  the follow-up
+- **their partner answered the follow-up with Yes**
+
+The third is the important one. A partner's "Yes" is a statement about the
+pairing, not about the responder, so it is third-party evidence that both people
+showed up. The bot already stores it. Pausing someone while holding proof they
+attended would be the system ignoring its own data. A partner's "Not yet" is not
+evidence of attendance and clears nothing for either member.
+
+**The ladder.** Two silent pairings trigger the first check-in. Two more trigger
+the second. Only an ignored second check-in auto-pauses. At the default biweekly
+cadence that is roughly two months of complete silence before the bot acts.
+
+> Still up for these? You haven't been in the last couple of threads, and I'd
+> rather ask than guess.
 > `[ Keep me in ]`  `[ Pause me ]`
 
-No answer within seven days auto-pauses them. The check-in fires at most once per
-silent streak, never on a schedule, and a single reply resets the streak to zero.
+The copy asks rather than charges, because the member most likely to see it is
+someone who did the calls and ignored the buttons. Seven days with no answer
+counts the check-in as ignored. One check-in per silent streak, never on a
+schedule. Any qualifying evidence above resets the streak and the ignored count
+to zero.
+
+**The asymmetry justifies being this slow.** A false negative costs one partner's
+turn. A false positive ejects an engaged member and tells them, wrongly, that the
+system judged them absent. The second is much harder to undo.
 
 **Coming back.** `/resume` restores standing enrollment, and so does `/join`.
 Two commands, one outcome, because a returning member's model of the interface
@@ -293,7 +321,7 @@ column into live data is a painful migration; adding it now costs one word.
 guilds(guild_id PK, created_at)
 members(guild_id, discord_user_id, state, timezone, tags, avoid_notes,
         availability_mask, availability_preset,
-        silent_streak, checkin_sent_at, joined_at,
+        silent_streak, checkins_ignored, checkin_sent_at, joined_at,
         PRIMARY KEY(guild_id, discord_user_id))
 rounds(id PK, guild_id, scheduled_for, state, created_at)
 pairings(id PK, guild_id, round_id, thread_id, state, created_at)
@@ -305,8 +333,10 @@ outcomes(pairing_id, discord_user_id, connected, answered_at)
 
 `members.state` is one of `active | paused`. A member who leaves is deleted, not
 flagged, so `/forget` is a real deletion. `silent_streak` counts consecutive
-pairings with no thread message and no follow-up answer; any reply resets it to
-zero, and reaching two triggers the check-in described in §4a.
+pairings that produced no evidence the member attended, by the test in §4a, which
+includes a partner's Yes as exonerating. `checkins_ignored` counts check-ins that
+went seven days unanswered. Reaching two on either counter advances the ladder;
+two ignored check-ins auto-pauses. Any qualifying evidence resets both to zero.
 
 `availability_mask` is 168 characters of `0` or `1`, index 0 being Monday 00:00
 in the member's local time. A packed representation would be 21 bytes instead of
@@ -359,9 +389,11 @@ produces the empty-overlap path; changing timezone moves the projected UTC hours
 by exactly the offset delta and leaves the stored local mask untouched; the
 `schedulable` score equals shared hours over 168 and stays in 0..1.
 
-**Enrollment hygiene**: a single reply resets the streak; the check-in fires at
-most once per streak; seven days of silence after a check-in auto-pauses; a
-paused member never appears in a round; `/resume` and `/join` are equivalent for
+**Enrollment hygiene**: any of the three evidence types resets streak and ignored
+count to zero; a partner's Yes clears the strike for both members while a
+partner's Not yet clears it for neither; one ignored check-in never auto-pauses;
+two does; the check-in fires at most once per streak; a paused member never
+appears in a round; `/resume` and `/join` are equivalent for
 a paused member and both restore history intact; returning zeroes
 `silent_streak`; a forgotten member who rejoins starts with no history at all.
 
