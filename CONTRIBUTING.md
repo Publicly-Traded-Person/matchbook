@@ -23,6 +23,11 @@ from the prose, and folding it in means re-reading every section it touches.
 Decisions stay open while they are arguable. If you disagree with one, comment
 on it. If you want a new one, open it.
 
+Two more labels keep the spec free of things that drift. `question` is for
+what is genuinely undecided and waits on evidence from real rounds. `verify` is
+for an assumption about Discord the first build has to confirm. Neither lives
+inline in the spec beyond a pointer to its issue.
+
 ## Full re-read after three
 
 After roughly three decisions have been folded in, the next action on the spec

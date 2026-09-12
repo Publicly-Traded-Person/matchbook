@@ -253,8 +253,8 @@ is choosing among repeats and the bot reads to members as getting worse.
 at half the ask. We also expect, but have not measured, that biweekly produces
 higher completion than weekly, in which case it compounds: `never-met`'s
 outcome-aware recovery has more confirmed pairings to work from. That second
-claim is a hypothesis to check after the first few rounds, not a reason the
-default was chosen. Cadence is per-server config and the README documents the
+claim is a hypothesis to check after the first few rounds (#11), not a reason
+the default was chosen. Cadence is per-server config and the README documents the
 `n-1` arithmetic so an adopter with 200 members knows to turn it up.
 
 ## 5. Scheduling model
@@ -332,7 +332,7 @@ posts once in the thread:
 > Did you two connect?  `[ Yes ]`  `[ Not yet ]`
 
 Each member may answer once; answers are independent and recorded per member. It
-never asks again, and it never asks in a `released` pairing (open question 2).
+never asks again, and it never asks in a `released` pairing (#9).
 "Not yet" rather than "No" because the honest answer in week one is usually
 scheduling rather than refusal, and a question that implies failure gets ignored.
 A Yes from either member is attendance evidence for both (§4a), and marks the
@@ -383,7 +383,7 @@ exists, and so must the .ics `LOCATION`.
 2. Create a Discord scheduled event on that channel. This gives both members
    Discord's own reminders and "interested" tracking for free. Whether the event
    is visible to members who cannot see the channel is an assumption to verify
-   in the first build; if it is guild-visible, the event is created without a
+   in the first build (#12); if it is guild-visible, the event is created without a
    description and titled only "Matchbook."
 3. Generate and post an .ics: a single `VEVENT` with `UID`, `DTSTAMP`, `DTSTART`,
    `DTEND` (all UTC), `SUMMARY`, `DESCRIPTION`, and `LOCATION` set to the voice
@@ -467,7 +467,8 @@ Connect. The README explains each in one line. Two notes:
   Channels permits. Editing overwrites on an existing channel would need Manage
   Roles, which is not requested; the T-10 Connect grant is therefore done by
   recreating the overwrite set at creation time plus one edit at T-10, and the
-  first build must confirm that edit is allowed under Manage Channels alone. If
+  first build must confirm that edit is allowed under Manage Channels alone
+  (#13). If
   it is not, the channel is created at T-10 instead and the scheduled event is
   created as an external event with the channel named in its location.
 - Notably absent: Move Members. Matchbook never relocates a person.
@@ -551,7 +552,8 @@ input to `never-met` (§4). Same data, three jobs. This is acceptable in v1
 because every decision it drives is lenient and reversible, but it is the
 pattern to watch: each new strategy that reads a signal should state what that
 signal is permitted to decide. This document does not yet contain a policy for
-that, and pretending one sentence covers it would be worse than saying so.
+that, and pretending one sentence covers it would be worse than saying so (#6
+carries a candidate rule).
 
 The future KmikeyM strategy reads through an existing read-only market-data
 service. It never touches the contact records, and it never ships in this repo.
@@ -636,12 +638,17 @@ meaningfully better around round three, once there are pairings and follow-up
 answers to learn from. Say this out loud rather than let the first pairing look
 like a bug.
 
-## 13. Open questions
+## 13. Open questions and unverified assumptions
 
-None blocking. To revisit after the first three rounds:
+None blocking. They live in the issue tracker, not here, so this document does
+not hold a second copy that drifts:
 
-1. Whether 30 minutes is the right default call length, or 20.
-2. Whether the follow-up should also fire for `released` pairings, which would
-   measure how often the fallback still produces a conversation.
-3. Whether a member who answered "Not yet" and then met should be able to update
-   their answer. In v1 the first answer stands.
+- Undecided, revisit after the first rounds: label
+  [`question`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Aquestion)
+  (#8 call length, #9 follow-up for released pairings, #10 updating a
+  "Not yet", #11 the biweekly-completion hypothesis).
+- Assumptions the first build must confirm: label
+  [`verify`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Averify)
+  (#12 event visibility on a private channel, #13 the T-10 Connect grant).
+- Decisions already folded in and still arguable: label
+  [`decision`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Adecision).
