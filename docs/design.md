@@ -4,6 +4,7 @@
 **Author:** Charlie (The Investor Relations)
 **Status:** 🟡 Open for review. Spec only, no code.
 **Repo:** `Publicly-Traded-Person/matchbook`, public, AGPL-3.0
+**Decisions, questions and build assumptions live in the issue tracker (§13).**
 
 ---
 
@@ -26,6 +27,9 @@ call. A pairing arrives with a proposed time already in it, either person can
 change it, and once both confirm they get a calendar file and a private voice
 channel that opens itself.
 
+And introductions arrive on the member's own clock. There is no pairing day. You
+join, and within about a day you have someone to talk to.
+
 ## 2. Why not just use CoffeeChat Bot
 
 CoffeeChat Bot (coffeechatbot.app, by Will Ness) is the closest existing thing
@@ -36,9 +40,10 @@ and it is competent. Its public site and Product Hunt listing were reviewed on
 |---|---|---|
 | Model | Synchronous mass voice event, rounds | Asynchronous pairing, one scheduled 1:1 call |
 | Matching input | Meeting history (boolean) | Composable scorers (numeric) |
+| When you get paired | At the event | Within about a day of becoming eligible |
 | Scheduling | Fixed event time, attend or miss it | Proposed time per pair, negotiable, .ics issued |
 | Source | Closed | AGPL-3.0 |
-| Moves people between channels | Yes, that is how its rounds work, so it presumably needs Move Members (not verified against its manifest) | Never. Members join the channel themselves |
+| Moves people between channels | Yes, that is how its rounds work, so it presumably needs Move Members (not verified against its manifest) | Never. Members join the channel themselves. Move Members, Mute Members and Manage Events are not requested |
 | Pricing | Not published | Free to self-host |
 
 The synchronous model needs a quorum to not feel sad and excludes anyone who
@@ -52,14 +57,17 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 - Standing opt-in, pause, resume, forget via slash commands
 - Auto-pause after two ignored check-ins, where a partner's confirmation counts
   as evidence a member attended
-- Recurring pairing rounds on a configured cadence
-- Scored matching with four bundled strategies and weighted composition
+- Rolling pairing: per-member eligibility, no batch rounds, a holding window, and
+  a novelty rule that prefers waiting for a stranger over repeating, until there
+  are no strangers left
+- Scored matching with four bundled strategies and weighted composition; every
+  strategy declares the signals it reads
 - Private thread per pairing
 - Per-member weekly availability (presets plus a custom editor)
 - Proposed meeting time drawn from real mutual availability, negotiation, lock-in
-- .ics generation, Discord scheduled event, private voice channel per pairing
-- Single follow-up ("did you two connect?") per member per pairing, feeding the
-  hygiene ladder, the reported metric, and `never-met`'s notion of "met"
+- .ics generation; a private voice channel created ten minutes before the call
+- Follow-up ("did you two connect?") per member, for locked pairings and for
+  released pairings that had thread activity
 - SQLite storage behind an interface, every row scoped by `guild_id`
 - Durable job scheduling for everything time-based, so a restart loses nothing
 - Docker Compose deployment, config file, no build step required of an adopter
@@ -67,19 +75,23 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 ### Out, v1 (deliberate)
 
 - Voice *rounds* / speed-networking (rejected model, not deferred)
+- Batch pairing rounds of any kind (#15)
+- Discord scheduled events (#14): voice-type events require Move Members and
+  Mute Members; external-type events have no channel to inherit privacy from
 - Web dashboard
 - Billing or any hosted-service surface
 - Identity link to kmikeym.com, and therefore any market-data matching
 - Any LLM in the matching path
 - Free-text time or timezone parsing (selection and autocomplete only)
-- Group sizes beyond 2, except one group of 3 when the count is odd
+- Group sizes other than two. With no batch there is no odd count to absorb
 - Calendar integration (reading real free/busy from Google Calendar or an .ics
   subscription). The weekly availability mask is in; live calendar access is not,
   because it costs OAuth, per-provider integrations, a genuine privacy surface,
   and it makes a self-hoster obtain API credentials to run a coffee bot.
-- A completion-rate scorer (favoring members whose calls tend to happen). A
-  natural v2 strategy once there are outcomes to read; in v1 it would only
-  penalize newcomers for having no data.
+- A completion-rate scorer (#2). A natural v2 strategy once there are outcomes
+  to read; in v1 it would only penalize newcomers for having no data.
+- Per-member cadence. Falls out of the eligibility model for free someday; not
+  now.
 
 ### Explicitly deferred, with a known home
 
@@ -93,37 +105,51 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 Six units. The first three import nothing platform-specific and are where the
 tests concentrate.
 
-**`core/matching`**: pure. `match(participants, history, strategy, opts) =>
-Pairing[]`. No IO, no clock, no Discord.
+**`core/matching`**: pure. `match(pool, history, strategy, opts) => Pairing[]`.
+No IO, no clock, no Discord. The pool is whoever is eligible right now (§4a),
+not the whole membership.
 
 **`core/strategies`** is the extension point:
 
 ```ts
+type Signal =
+  | 'pairing-history'   // who has been paired with whom, and when
+  | 'follow-up'         // the per-member "did you two connect" answers
+  | 'tags'              // self-declared interests
+  | 'availability'      // the weekly mask
+  | 'timezone'
+
 interface Strategy {
   readonly name: string
+  /** Every signal this strategy reads. Enforced by the Context it is handed. */
+  readonly reads: readonly Signal[]
   /** 0..1, higher is a better pairing. Must be symmetric: score(a,b) === score(b,a). */
   score(a: Participant, b: Participant, ctx: Context): number
 }
 ```
 
+`reads` is the rule from #6 made structural: a strategy gets a `Context`
+containing only the signals it declared, so reading something undeclared is a
+type error rather than a policy violation. §9 says what the declaration is for.
+
 Bundled, four:
 
-- `never-met`: 1 if the two have never been paired. Otherwise low when the last
-  pairing was recent, recovering toward 1 as rounds pass, so once every novel
-  pair is exhausted the least-recent repeats are chosen first. A past pairing
-  counts as fully "met" only if at least one member answered the follow-up with
-  Yes; a pairing nobody confirmed counts as half-met and recovers toward
-  eligibility twice as fast. This is how outcome data reaches scoring in v1.
-- `interest-overlap`: Jaccard similarity over self-declared tags.
-- `schedulable`: share of the week both members are actually available (§5).
-- `round-robin`: deterministic rotation, ignores everything else.
+- `never-met` (reads `pairing-history`, `follow-up`): 1 if the two have never
+  been paired. Otherwise low when the last pairing was recent, recovering toward
+  1 as time passes, so once every stranger is exhausted the least-recent repeats
+  are chosen first. A past pairing counts as fully "met" only if at least one
+  member answered the follow-up with Yes; a pairing nobody confirmed counts as
+  half-met and recovers twice as fast (#1).
+- `interest-overlap` (reads `tags`): Jaccard similarity over self-declared tags.
+- `schedulable` (reads `availability`, `timezone`): share of the week both
+  members are actually available (§5).
+- `round-robin` (reads `pairing-history`): deterministic rotation, ignores
+  everything else.
 
 `schedulable` is the clearest argument for scoring over a boolean. Availability
 could have been a filter applied after matching, which would exclude constrained
-members from rounds. As a scorer it does the opposite: it steers someone with
-narrow availability toward a partner they can genuinely meet, while the matcher's
-guarantee that everyone appears exactly once per round means narrow availability
-never benches anybody.
+members. As a scorer it does the opposite: it steers someone with narrow
+availability toward a partner they can genuinely meet.
 
 Composition is a weighted sum from config, normalized to 0..1. The shipped
 default:
@@ -134,15 +160,15 @@ schedulable       0.3
 interest-overlap  0.2
 ```
 
-**`core/rounds`**: everything time-based, decided against an injected clock.
-Which members are eligible, when the next round is due, when a pairing's channel
-should open and close, when its follow-up is due, when a check-in has expired.
-It owns the semantics of the `jobs` table (§6) and decides what is due; the
-adapter executes.
+**`core/eligibility`**: everything time-based, decided against an injected
+clock. Who is in the pool, who is being held and why, when a pull-forward is
+allowed, when a pairing's channel should open and close, when its follow-up is
+due, when a check-in has expired. It owns the semantics of the `jobs` table (§6)
+and decides what is due; the adapter executes.
 
 **`adapters/discord`**: the only unit importing a Discord library. Slash
-commands, thread creation, voice channel lifecycle, scheduled events, message
-delivery. Thin by design.
+commands, thread creation, voice channel lifecycle, message delivery. Thin by
+design.
 
 **`storage`**: interface plus a SQLite implementation. Generic SQL only, no
 SQLite-specific features, so a Postgres adapter is a swap rather than a rewrite.
@@ -150,40 +176,75 @@ SQLite-specific features, so a Postgres adapter is a swap rather than a rewrite.
 **`config`**: `ConfigStore` interface with `FileConfigStore` (TOML on disk,
 what self-hosters use) and, later, `DbConfigStore` (per-guild rows, what a
 hosted service needs). Holds the guild id, the parent text channel that threads
-are created under, the voice channel category, cadence, strategy weights, and
-the hygiene thresholds. All user-facing copy lives here as templates so nobody
-forks the repo to change the bot's voice.
+are created under, the voice channel category, the cadence, the holding window,
+the pull-forward limit, strategy weights, and the hygiene thresholds. All
+user-facing copy lives here as templates so nobody forks the repo to change the
+bot's voice.
 
 ### The matcher
 
-Optimal maximum-weight matching is the Blossom algorithm, which is genuinely
-fiddly. At the scale this tool targets (under ~50 participants per round), a
-greedy pass with randomized restarts (200 iterations, keep the highest total
-score) should land close to optimal in ~40 lines. "Close" is measured, not
-asserted: the test suite compares greedy against brute-force optimal on fixtures
-of ten or fewer and the README reports the gap. Ship greedy, keep the matcher
-behind an interface so anyone who outgrows it can substitute Blossom without
-touching strategies.
+The pool at any moment is small: whoever is eligible right now, typically two to
+a handful of people. The matcher scores every pair in it and takes the best
+non-overlapping set. At this size the difference between greedy and optimal
+matching is usually nothing, but the matcher stays behind an interface and the
+test suite measures greedy against brute-force optimal on every fixture of ten
+or fewer, so if a large community ever has a large pool the gap is a known
+number rather than a guess.
 
-Odd participant count: match on n-1, then attach the unmatched participant to
-whichever existing pair yields the highest mean score, forming one group of
-three. Nobody is ever benched, and the triad is not told it is the remainder.
-Everything below that says "both" or "the pair" applies to all three.
+## 4a. Enrollment, eligibility and hygiene
 
-## 4a. Enrollment and hygiene
+**Enrollment is standing.** `/join` once and you are in until you `/pause`. No
+per-round opt-in, no renewal step, no recurring ask. This matches how the 2019
+Dialup line worked and it is the entire ergonomic premise: the tool should cost
+nothing after the first thirty seconds.
 
-**Enrollment is standing.** `/join` once and you are in every round until you
-`/pause`. No per-round opt-in, no renewal step, no recurring ask. This matches
-how the 2019 Dialup line worked and it is the entire ergonomic premise: the tool
-should cost nothing after the first thirty seconds.
+**There is no pairing day (#15).** Each member has one date, `eligible_at`.
+Joining sets it to now. Being paired sets it to now plus the cadence. Members
+whose date has passed are the pool; whenever the pool has two or more, the
+matcher runs. A newcomer is eligible the moment they join, so the first thing
+that happens after `/join` is the thing they joined for.
+
+**Cadence is the minimum gap between one member's introductions**, measured from
+their last pairing, not from a calendar. The shipped default is two weeks.
+Nobody gets two introductions six days apart because they happened to join at
+the right moment, and two weeks is long enough that the thing does not become a
+chore.
+
+**Holding and pull-forward.** A member alone in the pool waits up to 24 hours
+(the holding window) for company. If nobody arrives, the bot pairs them with the
+soonest-eligible member, pulling that member's `eligible_at` forward by at most
+three days. Nobody minds their next introduction coming a few days early, and
+every pull-forward nudges a launch-day cohort out of lockstep, so a pool that
+started synchronized spreads itself across the period within a couple of cycles.
+
+**The novelty rule.** Waiting only helps if a stranger exists somewhere.
+
+1. If the best available pairing is with someone the member has never met, pair.
+2. If the only eligible partners are repeats, but someone the member has never
+   met exists among active members, hold for them. Pull-forward applies. The
+   hold lasts at most one cadence period. The member is told: "Holding a few
+   days for someone new rather than repeating."
+3. If the member has met everyone, do not wait. Pair with the least-recent
+   repeat and say so: "You've met everyone in Matchbook. Reconnecting you with
+   X, it's been four months." `never-met`'s recovery curve already ranks old
+   repeats above recent ones, so no extra machinery chooses X.
+
+Branch 3 is reconnection, not fallback. A second call with someone you clicked
+with months ago is a good call, and "you've met everyone" is a milestone with an
+obvious next line attached: the pool needs to grow. It is the most useful number
+the system produces and it is reported as such.
+
+**The arithmetic behind it.** With `n` active members, a member meets everyone
+after `n-1` introductions. Twelve members on a two-week cadence means about five
+months before anyone reaches branch 3; twenty members, about nine. That runway
+is the argument for two weeks over one and for recruitment over cleverness.
 
 **Standing enrollment has one failure mode and it is fatal if ignored.** People
 opt in at peak enthusiasm. Weeks later, someone who no longer wants introductions
 will not type `/pause`, because ignoring a bot is easier than telling it no. They
 go quiet instead. A listed-but-absent member is worse than a departed one: every
-round they are matched, they burn a real participant's entire turn. A pool of
-nominally-active ghosts looks healthy in the numbers right up until nobody is
-meeting anybody.
+time they are paired, they burn a real participant's turn. A pool of
+nominally-active ghosts looks healthy right up until nobody is meeting anybody.
 
 **So the bot declines to assume consent it has not seen evidence for.** The hard
 part is measuring the right thing. "Did not respond to the bot" and "did not
@@ -209,9 +270,8 @@ When it reaches two, the bot sends a check-in and **resets the streak to zero**;
 the check-in consumes the streak. If the check-in goes seven days unanswered,
 `checkins_ignored` increments. When `checkins_ignored` reaches two, the member is
 auto-paused. So auto-pause requires four silent pairings and two ignored
-check-ins, which at the default biweekly cadence is roughly two months of
-complete silence before the bot acts. Any qualifying evidence resets both
-counters to zero.
+check-ins, which at the default cadence is roughly two months of complete
+silence before the bot acts. Any qualifying evidence resets both counters.
 
 > Still up for these? You haven't been in the last couple of threads, and I'd
 > rather ask than guess.
@@ -227,10 +287,10 @@ system judged them absent. The second is much harder to undo.
 **Coming back.** `/resume` restores standing enrollment, and so does `/join`.
 Two commands, one outcome, because a returning member's model of the interface
 is "I am rejoining" and ours is "there is a state flag," and when those disagree
-the interface should bend. `/join` while paused resumes immediately and names the
-next round date; it does not ask the setup questions again, because they were
-already answered. `/availability` and `/timezone` remain available for anything
-that changed.
+the interface should bend. `/join` while paused resumes immediately, sets
+`eligible_at` to now, and does not ask the setup questions again, because they
+were already answered. `/availability` and `/timezone` remain available for
+anything that changed.
 
 **Pausing is not forgetting.** History survives a pause, which matters more than
 it sounds: `never-met` still knows who a returning member has already talked to,
@@ -242,20 +302,7 @@ who came back still sitting at one ignored check-in would be a single missed
 reply from being auto-paused again, which is a trap rather than hygiene.
 
 This is hygiene, not enforcement. It costs two counters and a timestamp on the
-member row and reuses the follow-up already specified in §5.
-
-**Cadence and pool size.** With `n` participants a round consumes `n/2` pairings
-and `n(n-1)/2` distinct pairs exist, so novel pairings exhaust in `n-1` rounds.
-Twelve members running weekly exhaust in eleven weeks, after which `never-met`
-is choosing among repeats and the bot reads to members as getting worse.
-
-**The shipped default is therefore biweekly, not weekly.** It doubles the runway
-at half the ask. We also expect, but have not measured, that biweekly produces
-higher completion than weekly, in which case it compounds: `never-met`'s
-outcome-aware recovery has more confirmed pairings to work from. That second
-claim is a hypothesis to check after the first few rounds (#11), not a reason
-the default was chosen. Cadence is per-server config and the README documents the
-`n-1` arithmetic so an adopter with 200 members knows to turn it up.
+member row and reuses the follow-up specified in §5.
 
 ## 5. Scheduling model
 
@@ -281,19 +328,21 @@ locked
   -> completed          follow-up posted, 24h after the scheduled end
 
 released
-  -> expired            7 days with no thread activity; thread archived quietly
+  -> completed          7 days after release, if anyone posted in the thread:
+                        follow-up posted (#9)
+  -> expired            7 days after release with no thread activity; archived
 
-completed                terminal; thread archived 7 days after the call
+completed                terminal; thread archived 7 days later
 ```
 
 **Availability.** A week is 168 hours, so each member's availability is a 168-bit
 weekly mask at hourly granularity, index 0 being Monday 00:00 in their own local
-time. Finding when people can meet is a bitwise AND across all members of the
-pairing. It is instant, it is a few dozen bytes on the member row, and it is the
-only availability model in the system: there is no separate civil-hours window.
+time. Finding when two people can meet is a bitwise AND. It is instant, it is a
+few dozen bytes on the member row, and it is the only availability model in the
+system: there is no separate civil-hours window.
 
 **The default mask is the `Any reasonable hour` preset: 09:00 to 21:00 local,
-every day.** A member who joins and never runs `/availability` gets exactly
+every day (#4).** A member who joins and never runs `/availability` gets exactly
 this, and the `/join` confirmation says so and names the command. It is not
 literally "anytime," because nobody who says anytime means 03:00.
 
@@ -311,11 +360,11 @@ available block into the mask per pass. Run it again to add another block; a
 `Clear` button empties the mask. The chosen preset is remembered so reopening the
 menu shows current state.
 
-**Slot proposal.** AND the masks, project to UTC, and take candidate 30-minute
-slots in the next 3 to 10 days that fall inside the shared hours, preferring
-evenings local to both. Propose one. On "Pick another time", offer up to five
-alternatives from the same shared set as a select menu. Calls are 30 minutes and
-the mask is hourly, so proposals land on the hour.
+**Slot proposal.** AND the two masks, project to UTC, and take candidate
+30-minute slots in the next 3 to 10 days that fall inside the shared hours,
+preferring evenings local to both. Propose one. On "Pick another time", offer up
+to five alternatives from the same shared set as a select menu. Calls are 30
+minutes and the mask is hourly, so proposals land on the hour.
 
 **Empty overlap** is a real outcome, not an error. A pairing with no shared hours
 goes straight to `released`, and the message says why rather than merely stepping
@@ -326,20 +375,22 @@ with no lock, the pairing releases rather than continuing to negotiate. A
 "Works for me" from one side is voided if the other side counters; the new
 proposal needs both confirmations.
 
-**Follow-up.** Twenty-four hours after a locked call's scheduled end, the bot
-posts once in the thread:
+**Follow-up.** Twenty-four hours after a locked call's scheduled end, or seven
+days after a release in which at least one member posted in the thread (#9), the
+bot posts once:
 
 > Did you two connect?  `[ Yes ]`  `[ Not yet ]`
 
 Each member may answer once; answers are independent and recorded per member. It
-never asks again, and it never asks in a `released` pairing (#9).
-"Not yet" rather than "No" because the honest answer in week one is usually
-scheduling rather than refusal, and a question that implies failure gets ignored.
-A Yes from either member is attendance evidence for both (§4a), and marks the
-pairing as fully met for `never-met` (§4).
+never asks again. Released pairings with no thread activity get no follow-up;
+asking two people who never spoke whether they met is noise. "Not yet" rather
+than "No" because the honest answer in week one is usually scheduling rather than
+refusal, and a question that implies failure gets ignored. A Yes from either
+member is attendance evidence for both (§4a), and marks the pairing as fully met
+for `never-met` (§4).
 
 **Timezones are mandatory**, captured at `/join` through a slash-command option
-with autocomplete over the IANA zone database. Typing `kos` offers
+with autocomplete over the IANA zone database (#5). Typing `kos` offers
 `Europe/Belgrade`; typing `oak` offers `America/Los_Angeles`. This is the
 Discord-native answer to a list of six hundred entries that a select menu (capped
 at 25 options) cannot hold and a free-text field would have to parse. Display uses
@@ -372,27 +423,21 @@ accurate than any stored pattern and it never goes stale, but it replaces one ta
 with six on every single pairing, which reintroduces exactly the coordination
 burden this feature exists to remove. A standing weekly mask is answered once.
 
-**On lock**, three things happen, and the order matters because of a Discord
-constraint: a voice-type scheduled event must reference a channel that already
-exists, and so must the .ics `LOCATION`.
+**On lock (#14):** generate and post an .ics: a single `VEVENT` with `UID`,
+`DTSTAMP`, `DTSTART`, `DTEND` (all UTC), `SUMMARY`, `DESCRIPTION`, and
+`LOCATION` set to the pairing's thread URL, which is where the room link will
+appear. No `ORGANIZER` or `ATTENDEE`: those require `mailto:` addresses the bot
+does not have and must not collect. No Discord scheduled event is created (§3).
 
-1. Create the private voice channel now, under the configured category, with
-   permission overwrites granting View Channel to the pairing's members only.
-   Connect is withheld until 10 minutes before the call so nobody wanders in a
-   week early. The channel is deleted 60 minutes after the scheduled end.
-2. Create a Discord scheduled event on that channel. This gives both members
-   Discord's own reminders and "interested" tracking for free. Whether the event
-   is visible to members who cannot see the channel is an assumption to verify
-   in the first build (#12); if it is guild-visible, the event is created without a
-   description and titled only "Matchbook."
-3. Generate and post an .ics: a single `VEVENT` with `UID`, `DTSTAMP`, `DTSTART`,
-   `DTEND` (all UTC), `SUMMARY`, `DESCRIPTION`, and `LOCATION` set to the voice
-   channel URL. No `ORGANIZER` or `ATTENDEE`: those require `mailto:` addresses
-   the bot does not have and must not collect.
+**Ten minutes before the call**, one job creates the private voice channel under
+the configured category, with View Channel and Connect granted to the two
+members in the create call itself, and posts in the thread: "Starts in ten
+minutes. Your room: <link>." That post is the reminder. Sixty minutes after the
+scheduled end, another job deletes the channel.
 
-A locked call that is later re-proposed (timezone change) deletes the event and
-channel and recreates them on the new lock, and posts a fresh .ics. The old
-.ics carried the same `UID`, so a calendar that imports both keeps one entry.
+A locked call that is later re-proposed (timezone change) posts a fresh .ics on
+the new lock, carrying the same `UID`, so a calendar that imports both keeps one
+entry. If the T-10 job has not yet run, nothing else needs undoing.
 
 **Graceful degradation is a feature, not an error path.** A released pairing
 falls back to exactly the behavior of a scheduling-free tool: the thread exists,
@@ -407,12 +452,11 @@ is a painful migration; adding it now costs one word per table.
 ```
 guilds(guild_id PK, created_at)
 members(guild_id, discord_user_id, state, timezone, tags, avoid_notes,
-        availability_mask, availability_preset,
+        availability_mask, availability_preset, eligible_at,
         silent_streak, checkins_ignored, checkin_sent_at, joined_at,
         PRIMARY KEY(guild_id, discord_user_id))
-rounds(id PK, guild_id, scheduled_for, state, created_at)
-pairings(id PK, guild_id, round_id, thread_id, voice_channel_id, event_id,
-         state, created_at)
+pairings(id PK, guild_id, thread_id, voice_channel_id, state, novelty,
+         created_at)
 pairing_members(guild_id, pairing_id, discord_user_id)
 proposals(id PK, guild_id, pairing_id, start_utc, duration_min, state,
           proposed_by, created_at)
@@ -420,6 +464,11 @@ confirmations(guild_id, proposal_id, discord_user_id, confirmed_at)
 outcomes(guild_id, pairing_id, discord_user_id, connected, answered_at)
 jobs(id PK, guild_id, kind, ref_id, run_at, state, created_at)
 ```
+
+There is no `rounds` table (#15). `members.eligible_at` is the entire cadence
+model. `pairings.novelty` records which branch of the novelty rule produced the
+pairing (`fresh | held | reconnect`), because the share of reconnections over
+time is the number that says the pool needs to grow.
 
 `members.state` is one of `active | paused`. A member who leaves is deleted, not
 flagged, so `/forget` is a real deletion. `silent_streak` and `checkins_ignored`
@@ -437,11 +486,12 @@ likelier than running out of disk.
 refusal.
 
 **Durable scheduling.** Every time-based action is a row in `jobs` with a
-`run_at`, and a single ticker polls for what is due. Round firing, channel
-Connect grant at T-10, channel deletion at T+60, follow-up at T+24h, check-in
-expiry at +7d, thread archival. Not in-process timers. This survives a restart,
-it scales from one guild to a thousand unchanged, and it makes every deferred
-action inspectable in one table. Correctness first, scale as a side effect.
+`run_at`, and a single ticker polls for what is due. Holding-window expiry,
+novelty-hold expiry, channel creation at T-10, channel deletion at T+60,
+follow-up at T+24h or release+7d, check-in expiry at +7d, thread archival. Not
+in-process timers. This survives a restart, it scales from one guild to a
+thousand unchanged, and it makes every deferred action inspectable in one table.
+Correctness first, scale as a side effect.
 
 ## 7. Discord surface
 
@@ -450,28 +500,26 @@ action inspectable in one table. Correctness first, scale as a side effect.
 - `/join` with options `timezone` (required, autocomplete), `interests`
   (optional text), `avoid` (optional text). Re-running it with any option
   updates just that option; a paused member running it is resumed. The
-  confirmation names the next round date, states the default availability, and
-  names `/availability`.
+  confirmation says roughly when to expect the first introduction, states the
+  default availability, names `/availability`, and states what the follow-up
+  answer is used for (§9).
 - `/timezone`, `/availability`, `/pause`, `/resume`, `/forget`.
 
-**Admin commands:** `/matchbook config`, `/matchbook run` (trigger a round now),
-`/matchbook status`.
+**Admin commands:** `/matchbook config`, `/matchbook status` (pool, holds,
+upcoming calls, reconnection share), `/matchbook pair <a> <b>` (force one).
 
 **Permissions requested:** View Channels, Send Messages, Create Private Threads,
-Send Messages in Threads, Manage Threads, Manage Channels, Manage Events,
-Connect. The README explains each in one line. Two notes:
+Send Messages in Threads, Manage Threads, Manage Channels, Connect. The README
+explains each in one line.
 
 - Connect is requested because the bot can only grant the pair permissions it
-  holds itself, and it must grant Connect on the private voice channel.
-- Permission overwrites are set when the channel is created, which Manage
-  Channels permits. Editing overwrites on an existing channel would need Manage
-  Roles, which is not requested; the T-10 Connect grant is therefore done by
-  recreating the overwrite set at creation time plus one edit at T-10, and the
-  first build must confirm that edit is allowed under Manage Channels alone
-  (#13). If
-  it is not, the channel is created at T-10 instead and the scheduled event is
-  created as an external event with the channel named in its location.
-- Notably absent: Move Members. Matchbook never relocates a person.
+  holds itself, and it grants Connect on the private voice channel.
+- Permission overwrites are set in the channel create call, which Manage
+  Channels permits ("only permissions your bot has in the guild can be
+  allowed/denied"). The bot never edits overwrites on an existing channel,
+  which would require Manage Roles.
+- Not requested: Move Members, Mute Members, Manage Events, Manage Roles.
+  Matchbook never relocates a person and never creates a Discord event (#14).
 
 **Why private threads rather than DMs.** Discord members can block DMs from
 people they have not friended, which is precisely the case a first introduction
@@ -485,48 +533,57 @@ created under the parent text channel named in config.
 Test-driven, concentrated on the pure core.
 
 **Matching properties** (not example tests): nobody is ever paired with
-themselves; every active participant appears exactly once per round; an odd
-count yields exactly one group of three and no other; while any never-paired
-combination remains, no round contains a repeat; once exhausted, the chosen
-repeats are the least recent; `score(a,b) === score(b,a)` for every bundled
-strategy; composed weights always produce a value in 0..1; the greedy matcher's
-total score is measured against brute-force optimal on every fixture of ten or
-fewer members and the gap is reported.
+themselves; nobody appears in two open pairings at once; while any never-paired
+combination is available in the pool, no fresh-eligible member is given a repeat;
+`score(a,b) === score(b,a)` for every bundled strategy; composed weights always
+produce a value in 0..1; a strategy's `Context` contains exactly its declared
+signals and nothing else; the greedy matcher's total score is measured against
+brute-force optimal on every fixture of ten or fewer members and the gap is
+reported.
 
-**Rounds and jobs** run against an injected clock. No test sleeps. Every job kind
-fires exactly once, at or after its `run_at`, and survives a simulated restart
-between scheduling and firing.
+**Eligibility**, against an injected clock: a newcomer is paired within the
+holding window whenever anyone else is eligible; a member alone past the window
+pulls the soonest-eligible member forward by no more than the limit; no member is
+paired sooner than cadence minus the pull-forward limit after their last
+pairing; a member with an unmet active member somewhere is held rather than
+repeated, for no longer than one cadence; a member who has met everyone is paired
+with their least-recent partner without holding; a synchronized twelve-member
+cohort is spread across the period within three cycles of simulated newcomers.
+
+**Jobs**: every job kind fires exactly once, at or after its `run_at`, and
+survives a simulated restart between scheduling and firing. No test sleeps.
 
 **Scheduling** state machine is exhaustively tested over its transition table,
 including both release entries (no overlap; 48h), the voided confirmation on a
-counter, the negotiation limit, and the locked-to-proposed re-propose path.
+counter, the negotiation limit, the locked-to-proposed re-propose path, and both
+follow-up triggers.
 
-**Availability**: mask intersection is commutative and associative (triads); a
-member on `Any reasonable hour` never constrains a pair beyond 09:00-21:00; a
-member with an empty mask always produces the no-overlap release; changing
-timezone moves the projected UTC hours by exactly the offset delta and leaves the
-stored local mask untouched; the `schedulable` score equals shared hours over
-168 and stays in 0..1; a new member's mask equals the default preset.
+**Availability**: mask intersection is commutative; a member on `Any reasonable
+hour` never constrains a pair beyond 09:00-21:00; a member with an empty mask
+always produces the no-overlap release; changing timezone moves the projected
+UTC hours by exactly the offset delta and leaves the stored local mask untouched;
+the `schedulable` score equals shared hours over 168 and stays in 0..1; a new
+member's mask equals the default preset.
 
 **Enrollment hygiene**: any of the evidence types resets both counters to zero; a
 partner's Yes clears the strike for both members while a partner's Not yet
 clears it for neither; sending a check-in resets `silent_streak`; one ignored
-check-in never auto-pauses; two does; a paused member never appears in a round;
+check-in never auto-pauses; two does; a paused member is never in the pool;
 `/resume` and `/join` are equivalent for a paused member and both restore
-history intact; returning zeroes both counters; a forgotten member who rejoins
-starts with no history at all.
+history intact; returning zeroes both counters and sets `eligible_at` to now; a
+forgotten member who rejoins starts with no history at all.
 
-**End to end** runs a full round against a fake Discord adapter and a synthetic
-20-member fixture guild, with no network.
+**End to end** runs a simulated month against a fake Discord adapter and a
+synthetic 20-member fixture guild, with no network.
 
 The real Discord adapter stays thin enough to verify by using it.
 
 ## 9. Privacy and consent
 
 Stored: Discord user ID, opt-in state, timezone, self-declared tags and
-avoid-notes, a weekly availability pattern, pairing history, proposed and
-confirmed times, one answer per member per pairing to "did you two connect," and
-the two hygiene counters. That is the entire schema.
+avoid-notes, a weekly availability pattern, an eligibility date, pairing
+history, proposed and confirmed times, one answer per member per pairing to "did
+you two connect," and the two hygiene counters. That is the entire schema.
 
 Never stored: message content, voice, or anything from an operator's private
 knowledge base.
@@ -546,14 +603,14 @@ That is a consent question, not a feature question. When market data enters
 scoring, `/join` gains an explicit sentence about what is used, and that is a
 change to the consent, not to the copy.
 
-**What data is allowed to decide.** The follow-up answer was specified as a
-metric and is now also evidence in a decision about membership (§4a) and an
-input to `never-met` (§4). Same data, three jobs. This is acceptable in v1
-because every decision it drives is lenient and reversible, but it is the
-pattern to watch: each new strategy that reads a signal should state what that
-signal is permitted to decide. This document does not yet contain a policy for
-that, and pretending one sentence covers it would be worse than saying so (#6
-carries a candidate rule).
+**What data is allowed to decide (#6).** Each strategy declares the signals it
+reads (§4, `reads`). A signal collected for one stated purpose is not read for
+another without a sentence in `/join` saying so. The follow-up answer is the
+live example: it is a metric, it is evidence in the hygiene ladder, and it is an
+input to `never-met`, and `/join` says all three in one line: "When I ask
+whether you connected, your answer counts toward your stats, tells me you're
+still active, and helps me avoid re-pairing people who already met." A future
+strategy that wants to read it for a fourth purpose changes that sentence first.
 
 The future KmikeyM strategy reads through an existing read-only market-data
 service. It never touches the contact records, and it never ships in this repo.
@@ -583,11 +640,11 @@ real data-protection obligation that a self-hosted tool does not carry.
 
 ## 11. Repo, license, branding
 
-Public repo at `Publicly-Traded-Person/matchbook`, credited to KmikeyM. An
+Public repo at `Publicly-Traded-Person/matchbook`, credited to KmikeyM (#7). An
 earlier draft argued for Quarterly Systems branding on the grounds that a
-general tool reads strangely wearing one person's ticker; Mike reversed that
-(#7). The README tells the story as KmikeyM's because it is, and the tool being
-general does not make its builder anonymous.
+general tool reads strangely wearing one person's ticker; Mike reversed that.
+The README tells the story as KmikeyM's because it is, and the tool being general
+does not make its builder anonymous.
 
 **AGPL-3.0.** Self-host freely; run a modified version as a network service to
 other people and you publish your changes. This keeps the tool genuinely free for
@@ -619,8 +676,9 @@ closed alternative. This section is written when there is something to run.
 
 ## 12. Rollout on the KmikeyM Discord
 
-First round is manually triggered, small, and not announced as a program. One
-message in `#chatter` and a permanent line in the channel topic.
+Not announced as a program. One message in `#chatter` and a permanent line in
+the channel topic. The first members to join are paired with each other within
+the holding window, so the first introductions happen the first day.
 
 Standing evidence as of 2026-09-12: within minutes of the idea being raised in
 chat, one member said they would participate outright and a second said they
@@ -628,27 +686,31 @@ would be interested in a shareholder activity that is not poker. Two data points
 same day. The second is the more interesting one: demand for a live thing from
 someone the existing ritual does not reach.
 
-**The reported metric is completion rate, not signups.** Match count is vanity.
-If eight people opt in and two calls actually happen, that is the finding.
+**The reported metrics are completion rate and reconnection share, not
+signups.** Match count is vanity. If eight people opt in and two calls actually
+happen, that is the finding. When reconnections start appearing, the pool needs
+new members, and that is a recruitment brief handed over by the data.
 
-**Round one has no history.** `never-met` scores every pair identically, so the
-first round is decided entirely by availability overlap and declared interests.
-That is not random, but it is not yet the model working either. It gets
-meaningfully better around round three, once there are pairings and follow-up
-answers to learn from. Say this out loud rather than let the first pairing look
-like a bug.
+**The first pairings have no history.** `never-met` scores every stranger
+identically, so early pairings are decided by availability overlap and declared
+interests. That is not random, but it is not yet the model working either. It
+gets meaningfully better after a few pairings per member, once there are
+follow-up answers to learn from. Say this out loud rather than let an early
+pairing look like a bug.
 
-## 13. Open questions and unverified assumptions
+## 13. Where the open items live
 
-None blocking. They live in the issue tracker, not here, so this document does
+None blocking. They are in the issue tracker, not here, so this document does
 not hold a second copy that drifts:
 
-- Undecided, revisit after the first rounds: label
-  [`question`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Aquestion)
-  (#8 call length, #9 follow-up for released pairings, #10 updating a
-  "Not yet", #11 the biweekly-completion hypothesis).
-- Assumptions the first build must confirm: label
-  [`verify`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Averify)
-  (#12 event visibility on a private channel, #13 the T-10 Connect grant).
 - Decisions already folded in and still arguable: label
   [`decision`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Adecision).
+  #3 is closed, superseded by #14. #12 and #13 are closed, resolved from
+  Discord's documentation.
+- Undecided, revisit after the first pairings: label
+  [`question`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Aquestion)
+  (#8 call length, #10 updating a "Not yet", #11 the two-week-completion
+  hypothesis).
+- Assumptions the first build must confirm: label
+  [`verify`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Averify).
+  None open at the time of writing.

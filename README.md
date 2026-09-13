@@ -70,8 +70,14 @@ this. It just called you.
 The two ideas meet in one place. You tell Matchbook when not to bother you, as a
 weekly pattern in your own local time, and that availability is not a filter
 applied after matching. It is a scorer applied during it. Someone who is only
-free on weekend mornings does not get excluded from rounds, they get paired with
-whoever else is free on weekend mornings.
+free on weekend mornings does not get excluded, they get paired with whoever
+else is free on weekend mornings.
+
+And there is no pairing day. You join, and within about a day you have someone
+to talk to. After that, one introduction every two weeks, measured from your
+last one, not from a calendar. When the only people left are ones you have
+already met, Matchbook waits for a stranger if one exists, and reconnects you
+with an old partner if none does. It tells you which.
 
 ## How it differs from what exists
 
@@ -104,17 +110,21 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
    per-pairing poll.** The alternative, a grid of candidate slots each person
    marks for every introduction, is more accurate and never goes stale, but
    costs five extra taps every time. Wrong trade?
-5. **The follow-up fires only for locked calls**, so a pairing that released and
-   then met anyway is invisible in the numbers. Worth measuring?
+5. **Rolling pairing instead of a weekly batch.** A newcomer is paired within
+   about a day rather than waiting for a pairing day, at the cost of the matcher
+   only ever seeing the handful of people eligible right now instead of the
+   whole pool. Fine at twelve members and at two hundred; is it fine at fifty?
 6. **Auto-pause after two ignored check-ins, with a partner's confirmation
    counting as evidence you attended.** Standing enrollment fills with ghosts
    because ignoring a bot is easier than telling it no. But someone who does
    every call and never taps a button is not a ghost, and their partner's "yes
    we met" proves it. Is that the right evidence test, and is roughly two months
    of silence the right rope?
-7. **Biweekly by default rather than weekly.** With `n` members you exhaust every
-   novel pairing in `n-1` rounds, so a twelve-person server running weekly is out
-   of new introductions in eleven weeks. Is biweekly the right shipped default?
+7. **Two weeks between introductions by default, and wait-for-a-stranger over
+   repeat.** With `n` members you have met everyone after `n-1` introductions,
+   so a twelve-person server on a weekly gap runs out of strangers in under
+   three months. When it does, Matchbook reconnects you with your least-recent
+   partner and says so. Right gap, right rule?
 8. **Availability is hourly, as a 168-bit weekly mask.** No half-hours, no
    one-off exceptions, no real calendar. Is hourly granularity enough, and is a
    recurring weekly pattern the right model for how people are actually busy?
