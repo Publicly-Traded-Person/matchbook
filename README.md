@@ -102,8 +102,10 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
    symmetric, composed as a weighted sum. Is there a matching rule you would want
    that cannot be expressed this way? Hard constraints ("never pair these two")
    and group-level rules are the suspected gaps.
-2. **Greedy matching with randomized restarts instead of Blossom.** Defensible
-   under about 50 participants per round. Where does that break?
+2. **Greedy matching instead of Blossom.** The pool at any moment is whoever is
+   eligible right now, usually a handful, so greedy and optimal agree. The test
+   suite measures the gap against brute force anyway. Is there a pool size or
+   shape where that stops being true?
 3. **The negotiation limit is one counter-proposal per side**, then the pairing
    releases and the two people are left to their own devices. Too strict?
 4. **Availability is a standing weekly pattern plus a declared timezone, not a
