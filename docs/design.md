@@ -142,17 +142,33 @@ Bundled, four:
   half-met and recovers twice as fast (#1).
 - `interest-overlap` (reads `tags`): Jaccard similarity over self-declared tags.
 - `schedulable` (reads `availability`, `timezone`): share of the week both
-  members are actually available (§5).
+  members are actually available (§5). It ranks feasible pairs; it does not
+  decide feasibility, which is a precondition (below, #16).
 - `round-robin` (reads `pairing-history`): deterministic rotation, ignores
   everything else.
 
-`schedulable` is the clearest argument for scoring over a boolean. Availability
-could have been a filter applied after matching, which would exclude constrained
-members. As a scorer it does the opposite: it steers someone with narrow
-availability toward a partner they can genuinely meet.
+**Shared availability is a precondition for a pair, not a term in its score
+(#16).** A pair is *feasible* only if the AND of their projected masks (§5) is
+non-empty. Only feasible pairs are scored at all. The first draft made
+`schedulable` a scorer alone, on the argument that a filter would exclude
+constrained members. That confused two filters. Filtering *members* by
+availability would exclude someone; filtering *pairs* by whether they can meet
+excludes nobody, because a constrained member is still paired with anyone they
+overlap with. And with the weights below, a scorer alone ranked a never-met pair
+with zero shared hours (0.5) above a recent repeat with every hour shared
+(about 0.4), then sent the winner straight to a released thread. Scheduling is
+the product; a pairing that cannot become a call is not a pairing.
 
-Composition is a weighted sum from config, normalized to 0..1. The shipped
-default:
+Among feasible pairs, `schedulable` still does the steering: someone free only
+on weekend mornings is ranked toward whoever else is free then.
+
+A member whose mask overlaps no active member's is not paired. The bot tells
+them once, names `/availability`, and leaves them in the pool; the holding
+window (§4a) does not apply to them, because no amount of waiting produces a
+feasible partner.
+
+Composition, over feasible pairs, is a weighted sum from config, normalized to
+0..1. The shipped default:
 
 ```
 never-met         0.5
@@ -218,6 +234,9 @@ every pull-forward nudges a launch-day cohort out of lockstep, so a pool that
 started synchronized spreads itself across the period within a couple of cycles.
 
 **The novelty rule.** Waiting only helps if a stranger exists somewhere.
+"Partner" in every branch means a feasible partner (#16): someone whose
+availability overlaps the member's. Holding for a stranger means holding for a
+stranger you can meet.
 
 1. If the best available pairing is with someone the member has never met, pair.
 2. If the only eligible partners are repeats, but someone the member has never
@@ -310,13 +329,14 @@ Pairing state machine:
 
 ```
 created
-  -> time_proposed      shared hours exist; thread posted with a proposal
-  -> released           no shared hours; thread posted, time left to the pair
+  -> time_proposed      thread posted with a proposal (feasibility is
+                        guaranteed at creation, #16)
 
 time_proposed
   -> one_confirmed      first "Works for me"
   -> time_proposed      a counter-proposal (at most one per side)
   -> released           48h after the latest proposal with no lock
+  -> released           no shared hours remain after a timezone change
 
 one_confirmed
   -> locked             second "Works for me"
@@ -366,9 +386,11 @@ preferring evenings local to both. Propose one. On "Pick another time", offer up
 to five alternatives from the same shared set as a select menu. Calls are 30
 minutes and the mask is hourly, so proposals land on the hour.
 
-**Empty overlap** is a real outcome, not an error. A pairing with no shared hours
-goes straight to `released`, and the message says why rather than merely stepping
-back: no time works for both of you, the thread is yours.
+**Empty overlap** cannot occur at creation: the matcher only forms feasible
+pairs (#16). It can still occur later, when a timezone change removes every
+shared hour from a pairing already in flight. That pairing goes to `released`,
+and the message says why rather than merely stepping back: no time works for
+both of you any more, the thread is yours.
 
 **Negotiation limit.** Each side gets one counter-proposal. Once both are spent
 with no lock, the pairing releases rather than continuing to negotiate. A
@@ -533,8 +555,11 @@ created under the parent text channel named in config.
 Test-driven, concentrated on the pure core.
 
 **Matching properties** (not example tests): nobody is ever paired with
-themselves; nobody appears in two open pairings at once; while any never-paired
-combination is available in the pool, no fresh-eligible member is given a repeat;
+themselves; nobody appears in two open pairings at once; no pairing is ever
+formed between two members with empty projected overlap; given a stranger with
+no shared hours and a recent repeat with full overlap, the repeat is chosen
+(#16); while any never-paired feasible combination is available in the pool, no
+fresh-eligible member is given a repeat;
 `score(a,b) === score(b,a)` for every bundled strategy; composed weights always
 produce a value in 0..1; a strategy's `Context` contains exactly its declared
 signals and nothing else; the greedy matcher's total score is measured against
@@ -554,13 +579,14 @@ cohort is spread across the period within three cycles of simulated newcomers.
 survives a simulated restart between scheduling and firing. No test sleeps.
 
 **Scheduling** state machine is exhaustively tested over its transition table,
-including both release entries (no overlap; 48h), the voided confirmation on a
+including both release entries (48h; overlap lost after a timezone change), the
+voided confirmation on a
 counter, the negotiation limit, the locked-to-proposed re-propose path, and both
 follow-up triggers.
 
 **Availability**: mask intersection is commutative; a member on `Any reasonable
 hour` never constrains a pair beyond 09:00-21:00; a member with an empty mask
-always produces the no-overlap release; changing timezone moves the projected
+is never paired and is told once; changing timezone moves the projected
 UTC hours by exactly the offset delta and leaves the stored local mask untouched;
 the `schedulable` score equals shared hours over 168 and stays in 0..1; a new
 member's mask equals the default preset.
@@ -692,8 +718,8 @@ happen, that is the finding. When reconnections start appearing, the pool needs
 new members, and that is a recruitment brief handed over by the data.
 
 **The first pairings have no history.** `never-met` scores every stranger
-identically, so early pairings are decided by availability overlap and declared
-interests. That is not random, but it is not yet the model working either. It
+identically, so early pairings are decided by how much availability the two
+share and by declared interests. That is not random, but it is not yet the model working either. It
 gets meaningfully better after a few pairings per member, once there are
 follow-up answers to learn from. Say this out loud rather than let an early
 pairing look like a bug.

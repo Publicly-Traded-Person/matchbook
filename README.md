@@ -68,10 +68,11 @@ between you" looks like politeness and functions as an obstacle. Dialup understo
 this. It just called you.
 
 The two ideas meet in one place. You tell Matchbook when not to bother you, as a
-weekly pattern in your own local time, and that availability is not a filter
-applied after matching. It is a scorer applied during it. Someone who is only
-free on weekend mornings does not get excluded, they get paired with whoever
-else is free on weekend mornings.
+weekly pattern in your own local time. Two people who share no hours are never
+paired, because a pairing that cannot become a call is not a pairing. Among
+people who can meet, availability is a scorer: someone who is only free on
+weekend mornings does not get excluded, they get paired with whoever else is
+free on weekend mornings.
 
 And there is no pairing day. You join, and within about a day you have someone
 to talk to. After that, one introduction every two weeks, measured from your
@@ -101,7 +102,8 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
 1. **Is the scoring interface the right shape?** `score(a, b, ctx) => 0..1`,
    symmetric, composed as a weighted sum. Is there a matching rule you would want
    that cannot be expressed this way? Hard constraints ("never pair these two")
-   and group-level rules are the suspected gaps.
+   and group-level rules are the suspected gaps. Shared availability already
+   turned out to be one: it is a precondition outside the score (#16).
 2. **Greedy matching instead of Blossom.** The pool at any moment is whoever is
    eligible right now, usually a handful, so greedy and optimal agree. The test
    suite measures the gap against brute force anyway. Is there a pool size or
