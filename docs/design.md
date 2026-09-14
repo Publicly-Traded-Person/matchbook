@@ -234,6 +234,21 @@ three days. Nobody minds their next introduction coming a few days early, and
 every pull-forward nudges a launch-day cohort out of lockstep, so a pool that
 started synchronized spreads itself across the period within a couple of cycles.
 
+**Pull-forward cannot keep the newcomer promise at launch, so volunteers do
+(#17).** If the whole pool was paired yesterday, the soonest-eligible member is
+thirteen days out and a three-day pull-forward reaches nobody; the first person
+to join a week after launch would wait eleven days for a bot that said it would
+introduce them. So a member may volunteer to welcome newcomers with `/welcome
+on` (also a button in the `/join` confirmation; default off). When a newcomer's
+first pairing would otherwise wait past the holding window, the matcher may pair
+them with any welcomer, ignoring the welcomer's `eligible_at`. Feasibility
+(§4) still applies. A welcome pairing does not move the welcomer's own
+`eligible_at`: welcoming is extra, not instead. A welcomer takes at most one
+welcome pairing per seven days, so a handful of volunteers is not consumed by a
+launch-week wave. The newcomer's `eligible_at` is set as for any pairing. The
+alternative, lifting the pull-forward cap for first pairings, keeps the promise
+by taking a turn nobody agreed to; volunteering is consent.
+
 **The novelty rule.** Waiting only helps if a stranger exists somewhere.
 "Partner" in every branch means a feasible partner (#16): someone whose
 availability overlaps the member's. Holding for a stranger means holding for a
@@ -490,10 +505,11 @@ is a painful migration; adding it now costs one word per table.
 guilds(guild_id PK, created_at)
 members(guild_id, discord_user_id, state, timezone, tags, avoid_notes,
         availability_mask, availability_preset, eligible_at,
+        welcome, last_welcome_at,
         needs_ack, checkins_ignored, checkin_sent_at, joined_at,
         PRIMARY KEY(guild_id, discord_user_id))
 pairings(id PK, guild_id, thread_id, voice_channel_id, state, novelty,
-         created_at)
+         created_at)   -- novelty: fresh | held | reconnect | welcome
 pairing_members(guild_id, pairing_id, discord_user_id)
 proposals(id PK, guild_id, pairing_id, start_utc, duration_min, state,
           proposed_by, created_at)
@@ -504,8 +520,10 @@ jobs(id PK, guild_id, kind, ref_id, run_at, state, created_at)
 
 There is no `rounds` table (#15). `members.eligible_at` is the entire cadence
 model. `pairings.novelty` records which branch of the novelty rule produced the
-pairing (`fresh | held | reconnect`), because the share of reconnections over
-time is the number that says the pool needs to grow.
+pairing (`fresh | held | reconnect | welcome`), because the share of
+reconnections over time is the number that says the pool needs to grow, and the
+share of welcomes says whether launch-week demand outran the pool. `welcome` and
+`last_welcome_at` are the volunteer flag and its seven-day throttle (#17).
 
 `members.state` is one of `active | paused`. A member who leaves is deleted, not
 flagged, so `/forget` is a real deletion. `needs_ack` and `checkins_ignored`
@@ -540,7 +558,8 @@ Correctness first, scale as a side effect.
   confirmation says roughly when to expect the first introduction, states the
   default availability, names `/availability`, and states what the follow-up
   answer is used for (§9).
-- `/timezone`, `/availability`, `/pause`, `/resume`, `/forget`.
+- `/timezone`, `/availability`, `/welcome on|off`, `/pause`, `/resume`,
+  `/forget`.
 
 **Admin commands:** `/matchbook config`, `/matchbook status` (pool, holds,
 upcoming calls, reconnection share), `/matchbook pair <a> <b>` (force one).
@@ -583,7 +602,10 @@ reported.
 
 **Eligibility**, against an injected clock: a newcomer is paired within the
 holding window whenever anyone else is eligible; a member alone past the window
-pulls the soonest-eligible member forward by no more than the limit; no member is
+pulls the soonest-eligible member forward by no more than the limit; a newcomer
+alone past the window with no member within the pull-forward limit is paired
+with a welcomer, whose `eligible_at` does not move and who is not welcomed
+again within seven days; a newcomer with no welcomer and nobody in reach waits; no member is
 paired sooner than cadence minus the pull-forward limit after their last
 pairing; a member with an unmet active member somewhere is held rather than
 repeated, for no longer than one cadence; a member who has met everyone is paired
@@ -721,7 +743,10 @@ closed alternative. This section is written when there is something to run.
 
 Not announced as a program. One message in `#chatter` and a permanent line in
 the channel topic. The first members to join are paired with each other within
-the holding window, so the first introductions happen the first day.
+the holding window, so the first introductions happen the first day. Before
+enrollment opens, ask two or three people who said yes early to run `/welcome
+on`, so the person who joins a week after launch does not wait on a cohort that
+all paired at once (#17).
 
 Standing evidence as of 2026-09-12: within minutes of the idea being raised in
 chat, one member said they would participate outright and a second said they
