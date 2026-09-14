@@ -1,0 +1,24 @@
+{
+ "tasks": {
+  "4": {
+   "hash": "202a4af656e6d417925a6011dacb16e924dea6df371456bedddca5694644a5df",
+   "verdict": "pass",
+   "reason": "All eight clauses falsifiable; eligibleAt max branches, whole-row deep-equals, excess-field type error (round 5)."
+  },
+  "13": {
+   "hash": "07d01f03d75fdb84ea48739093eb03bc31ce8734c13b9d53576459b4e78b7ca9",
+   "verdict": "pass",
+   "reason": "Every clause pins values and names the absent case; room, follow-up and status literals self-consistent; the join-to-follow-up chain established at the app layer (round 5)."
+  },
+  "14": {
+   "hash": "470d11cfcf3c86a765e373db2ec3d27326b7b796ed37e27365ae7af1590df51a",
+   "verdict": "pass",
+   "reason": "All eleven interaction shapes plus null, port overwrites never edited, exit codes with literal output, exact 25-choice cap (round 2)."
+  }
+ },
+ "tally": {
+  "dispatched": 0,
+  "rejected": 0,
+  "note": "verdicts carried from 2026-09-14-matchbook-build-1.gate-verdicts.json; Claim and Proof text unchanged, hashes identical"
+ }
+}
