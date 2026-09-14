@@ -2,10 +2,13 @@
 
 A Discord bot that introduces two people and then schedules the call.
 
-**Status: design spec only. There is no code yet.** This repository exists so the
-design can be argued with before anything gets built. If you have opinions, open
-an issue. Read the spec: **[`docs/design.md`](docs/design.md)**. Decisions
-already folded into it are filed as issues labelled
+**Status: build 1 is in the tree.** It joins people, pairs them by rotation,
+proposes a time, opens the room and follows up. The scorers of build 2 are not
+written yet, so the default weighting is `round-robin` alone. The design is
+still the thing to argue with, and it is ahead of the code: read the spec,
+**[`docs/design.md`](docs/design.md)**, then the [Quickstart](#quickstart) if
+you want to run it. If you have opinions, open an issue. Decisions already
+folded into it are filed as issues labelled
 [`decision`](https://github.com/Publicly-Traded-Person/matchbook/issues?q=label%3Adecision),
 one each, so you can argue with one without diffing the whole document. How
 changes land: [`CONTRIBUTING.md`](CONTRIBUTING.md).
@@ -136,6 +139,94 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
    recurring weekly pattern the right model for how people are actually busy?
 9. **Self-hosting story.** Clone, edit one TOML file, `docker compose up`. If you
    would not run this, say what stops you.
+
+## Quickstart
+
+Four commands and one file to edit. Budget ten minutes, most of it spent in the
+Discord developer portal making a bot account.
+
+```sh
+git clone https://github.com/Publicly-Traded-Person/matchbook
+cd matchbook
+cp config.example.toml config.toml
+$EDITOR config.toml
+export DISCORD_TOKEN=...
+docker compose up
+```
+
+`config.toml` is the only file you edit. It wants your guild id, the text
+channel pairing threads are created under, and the category the private voice
+channels go in. Everything else has a default.
+
+`DISCORD_TOKEN` is the bot token from the Discord developer portal. It stays in
+your environment, never in the config file, and the container reads it from
+there.
+
+To get the bot into your server, run:
+
+```sh
+bun run src/main.ts --check-config config.toml
+```
+
+It validates the config and prints the invite URL with exactly the permissions
+listed below, so you can read the scopes before you click. Then `docker compose
+up` again, or `docker compose up -d` once you are happy.
+
+The database is written to `./data/matchbook.db`, bind mounted into the
+container at `/app/data`, so it survives a rebuild. Set `MATCHBOOK_DB` if you
+want it somewhere else.
+
+## Permissions
+
+Seven, and this is what each one is for:
+
+- **View Channels**: read the channel pairing threads are created under, and see the voice category.
+- **Send Messages**: post the introduction and the follow up in that channel.
+- **Create Private Threads**: each pairing gets its own thread, visible only to the two people in it.
+- **Send Messages in Threads**: everything after the introduction happens in the thread.
+- **Manage Threads**: archive a thread when the pairing is done or expired.
+- **Manage Channels**: create the private voice channel ten minutes before the call and delete it after. Its member overwrites are set in the create call itself, which is a Manage Channels operation.
+- **Connect**: a bot can only grant a permission it holds itself, so it needs Connect in order to give the pair Connect on their own room.
+
+Not requested: Move Members, Mute Members, Manage Events and Manage Roles. Matchbook never drags anyone into a channel, never touches anyone's microphone, creates no server events, and assigns no roles. If you see it ask for one of those, something is wrong.
+
+## Writing a scorer
+
+A matching strategy answers one question, "how good would a pairing of A and B
+be," as a number between 0 and 1. The interface is in
+[`src/types.ts`](src/types.ts):
+
+```ts
+export interface Participant {
+  readonly id: MemberId
+  readonly timezone: string // IANA zone id
+  readonly mask: Mask // 168 chars of '0' | '1', index 0 is Monday 00:00 local
+  readonly tags: readonly string[]
+  readonly avoid: readonly MemberId[]
+  readonly joinedAt: number
+  readonly eligibleAt: number
+}
+
+export interface Strategy<R extends Signal = Signal> {
+  readonly name: string
+  /** Every signal this strategy reads. Enforced by the Context it is handed. */
+  readonly reads: readonly R[]
+  /** 0..1, higher is a better pairing. Must be symmetric. */
+  score(a: Participant, b: Participant, ctx: Context<R>): number
+}
+```
+
+`reads` is a declaration, not documentation. A strategy lists the signals it
+wants, and the `Context` it is handed at call time is a `Pick` of exactly those,
+so reading a signal you did not declare is a type error rather than a surprise
+in production. The available signals are `pairing-history`, `follow-up`, `tags`,
+`availability` and `timezone`.
+
+Build 1 ships one strategy, `round-robin`, which scores by how long ago the two
+last met and is the default weighting. Build 2 adds the rest of the scorers,
+availability overlap and tag affinity among them, composed as a weighted sum you
+configure per server. Your own scorer is a file that exports one `Strategy` and
+a weight in `config.toml`. It can stay private, and the matcher does not change.
 
 ## License
 

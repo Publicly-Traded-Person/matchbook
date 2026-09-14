@@ -1,0 +1,50 @@
+# Matchbook configuration. Copy this file to config.toml, fill in the three ids
+# for your server, and you are done: everything else below is already the
+# shipped default, written out so you can see what you are changing.
+#
+# One [[guilds]] block per Discord server. Add another block to run the same bot
+# in a second server; nothing is shared between them.
+#
+# Required, all Discord ids (right click with Developer Mode on, Copy ID):
+#   guild_id                   the server the bot runs in
+#   thread_parent_channel_id   the text channel that pairing threads hang under
+#   voice_category_id          the category the private call rooms are made in
+#
+# Optional, shown here at their defaults:
+#   cadence_days               minimum gap between one member's introductions,
+#                              measured from their last pairing, not a calendar
+#   holding_window_hours       how long someone alone in the pool waits for
+#                              company before the bot pairs them anyway
+#   pull_forward_days          the most the bot will bring another member's next
+#                              introduction forward to make that pairing
+#   negotiation_timeout_hours  time from the latest proposed slot with nobody
+#                              locked in before the bot steps back
+#   call_minutes               length of a proposed call
+#
+# [guilds.weights] is the matcher: a weighted sum over the bundled strategies,
+# normalized to 0 to 1. Names are strategy names, values are any positive
+# numbers (they do not have to add up to 1). Drop a name to switch it off.
+#
+# [guilds.copy] is every sentence the bot says. Set a key here and the bot uses
+# your wording instead of the built in one; leave it out and the default stands.
+# The keys are listed in src/config/copy.ts, which also holds the defaults.
+# Placeholders look like {name} and have to survive into your version: a
+# template that drops {link} loses the call room link. join-confirmation is
+# filled in below so you can see where the voice lives.
+
+[[guilds]]
+guild_id = "000000000000000000"
+thread_parent_channel_id = "000000000000000000"
+voice_category_id = "000000000000000000"
+
+cadence_days = 14
+holding_window_hours = 24
+pull_forward_days = 3
+negotiation_timeout_hours = 48
+call_minutes = 30
+
+[guilds.weights]
+round-robin = 1.0
+
+[guilds.copy]
+join-confirmation = "You're in. I'll introduce you to someone as soon as another member is free, usually within about a day. Unless you say otherwise, I assume you're available 09:00 to 21:00 in your timezone, every day; run /availability to change that. When I ask whether you connected, your answer counts toward your stats, tells me you're still active, and helps me avoid re-pairing people who already met."

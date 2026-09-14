@@ -1,0 +1,11 @@
+services:
+  matchbook:
+    build: .
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+    volumes:
+      # Your edited config, read-only: the bot never writes it.
+      - ./config.toml:/app/config.toml:ro
+      # The SQLite database lives here, so it survives a rebuild.
+      - ./data:/app/data
+    restart: unless-stopped
