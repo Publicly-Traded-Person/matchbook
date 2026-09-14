@@ -72,10 +72,11 @@ weekly pattern in your own local time. Two people who share no hours are never
 paired, because a pairing that cannot become a call is not a pairing. Among
 people who can meet, availability is a scorer: someone who is only free on
 weekend mornings does not get excluded, they get paired with whoever else is
-free on weekend mornings.
+free on weekend mornings. The first build pairs by rotation; the scorers switch
+on once there are outcomes to compare against.
 
 And there is no pairing day. You join, and within about a day you have someone
-to talk to. After that, one introduction every two weeks, measured from your
+to talk to, as long as someone is free to meet you. After that, one introduction every two weeks, measured from your
 last one, not from a calendar. When the only people left are ones you have
 already met, Matchbook waits for a stranger if one exists, and reconnects you
 with an old partner if none does. It tells you which.
@@ -115,7 +116,8 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
    marks for every introduction, is more accurate and never goes stale, but
    costs five extra taps every time. Wrong trade?
 5. **Rolling pairing instead of a weekly batch.** A newcomer is paired within
-   about a day rather than waiting for a pairing day, at the cost of the matcher
+   about a day when someone feasible is eligible, rather than waiting for a
+   pairing day, at the cost of the matcher
    only ever seeing the handful of people eligible right now instead of the
    whole pool. Fine at twelve members and at two hundred; is it fine at fifty?
 6. **One silent pairing and you are asked before the next one, with a

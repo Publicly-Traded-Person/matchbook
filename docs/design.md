@@ -28,7 +28,8 @@ change it, and once both confirm they get a calendar file and a private voice
 channel that opens itself.
 
 And introductions arrive on the member's own clock. There is no pairing day. You
-join, and within about a day you have someone to talk to.
+join, and within about a day you have someone to talk to, as long as someone is
+free to meet you.
 
 ## 2. Why not just use CoffeeChat Bot
 
@@ -40,7 +41,7 @@ and it is competent. Its public site and Product Hunt listing were reviewed on
 |---|---|---|
 | Model | Synchronous mass voice event, rounds | Asynchronous pairing, one scheduled 1:1 call |
 | Matching input | Meeting history (boolean) | Composable scorers (numeric) |
-| When you get paired | At the event | Within about a day of becoming eligible |
+| When you get paired | At the event | Within about a day of becoming eligible, when a feasible stranger or welcomer exists |
 | Scheduling | Fixed event time, attend or miss it | Proposed time per pair, negotiable, .ics issued |
 | Source | Closed | AGPL-3.0 |
 | Moves people between channels | Yes, that is how its rounds work, so it presumably needs Move Members (not verified against its manifest) | Never. Members join the channel themselves. Move Members, Mute Members and Manage Events are not requested |
@@ -178,13 +179,18 @@ the product; a pairing that cannot become a call is not a pairing.
 Among feasible pairs, `schedulable` still does the steering: someone free only
 on weekend mornings is ranked toward whoever else is free then.
 
+Avoid notes are the other precondition. `/join`'s `avoid` option names members
+the matcher must never pair you with; it is honored before scoring, is never
+exposed as a `Signal`, and its only purpose is that exclusion (§9).
+
 A member whose mask overlaps no active member's is not paired. The bot tells
 them once, names `/availability`, and leaves them in the pool; the holding
 window (§4a) does not apply to them, because no amount of waiting produces a
 feasible partner.
 
 Composition, over feasible pairs, is a weighted sum from config, normalized to
-0..1. The shipped default:
+0..1. The build 1 default is `round-robin 1.0` and nothing else (#19). The
+build 2 default:
 
 ```
 never-met         0.5
@@ -239,27 +245,31 @@ that happens after `/join` is the thing they joined for.
 **Cadence is the minimum gap between one member's introductions**, measured from
 their last pairing, not from a calendar. The shipped default is two weeks.
 Nobody gets two introductions six days apart because they happened to join at
-the right moment, and two weeks is long enough that the thing does not become a
+the right moment (a welcomer's extra pairing, #17, is the one consented
+exception), and two weeks is long enough that the thing does not become a
 chore.
 
 **Holding and pull-forward.** A member alone in the pool waits up to 24 hours
 (the holding window) for company. If nobody arrives, the bot pairs them with the
-soonest-eligible member, pulling that member's `eligible_at` forward by at most
-three days. Nobody minds their next introduction coming a few days early, and
+soonest-eligible feasible stranger, or with the soonest-eligible member when the
+novelty rule's branch 3 applies, pulling that member's `eligible_at` forward by
+at most three days. The novelty rule takes precedence over the holding window:
+at hour 24, a repeat is not pulled forward while a stranger exists. Nobody minds their next introduction coming a few days early, and
 every pull-forward nudges a launch-day cohort out of lockstep, so a pool that
 started synchronized spreads itself across the period within a couple of cycles.
 
 **Pull-forward cannot keep the newcomer promise at launch, so volunteers do
 (#17).** If the whole pool was paired yesterday, the soonest-eligible member is
-thirteen days out and a three-day pull-forward reaches nobody; the first person
-to join a week after launch would wait eleven days for a bot that said it would
-introduce them. So a member may volunteer to welcome newcomers with `/welcome
+thirteen days out and a three-day pull-forward reaches nobody; the person who
+joins the day after launch waits ten days, and the one who joins a week after
+launch waits four, for a bot that said it would introduce them. So a member may volunteer to welcome newcomers with `/welcome
 on` (also a button in the `/join` confirmation; default off). When a newcomer's
 first pairing would otherwise wait past the holding window, the matcher may pair
 them with any welcomer, ignoring the welcomer's `eligible_at`. Feasibility
 (§4) still applies. A welcome pairing does not move the welcomer's own
-`eligible_at`: welcoming is extra, not instead. A welcomer takes at most one
-welcome pairing per seven days, so a handful of volunteers is not consumed by a
+`eligible_at`: welcoming is extra, not instead. A welcomer with an open pairing
+is not eligible to welcome, so nobody is in two pairings at once. A welcomer
+takes at most one welcome pairing per seven days, so a handful of volunteers is not consumed by a
 launch-week wave. The newcomer's `eligible_at` is set as for any pairing. The
 alternative, lifting the pull-forward cap for first pairings, keeps the promise
 by taking a turn nobody agreed to; volunteering is consent.
@@ -272,8 +282,8 @@ stranger you can meet.
 1. If the best available pairing is with someone the member has never met, pair.
 2. If the only eligible partners are repeats, but someone the member has never
    met exists among active members, hold for them. Pull-forward applies. The
-   hold lasts at most one cadence period. The member is told: "Holding a few
-   days for someone new rather than repeating."
+   hold lasts at most one cadence period. The member is told: "Holding a while
+   for someone new rather than repeating."
 3. If the member has met everyone, do not wait. Pair with the least-recent
    repeat and say so: "You've met everyone in Matchbook. Reconnecting you with
    X, it's been four months." `never-met`'s recovery curve already ranks old
@@ -317,9 +327,9 @@ evidence of attendance and clears nothing for either member.
 
 **The gate, precisely (#18).** A pairing that ends silent for a member sets
 `needs_ack` on their row. A member with `needs_ack` is not in the pool. When
-their `eligible_at` arrives, the bot sends one check-in:
+their `eligible_at` arrives, the bot sends a check-in:
 
-> Still up for these? You haven't been in the last couple of threads, and I'd
+> Still up for these? You weren't around for your last introduction, and I'd
 > rather ask than guess.
 > `[ Keep me in ]`  `[ Pause me ]`
 
@@ -331,8 +341,8 @@ member most likely to see it is someone who did the call and ignored the
 buttons.
 
 One housekeeping counter remains. An ask unanswered for one full cadence period
-counts as ignored (`checkins_ignored`); two of those auto-pause the row so the
-member list stays honest. This never costs a partner anything, because the
+counts as ignored (`checkins_ignored` increments) and the ask is re-sent once;
+two ignored asks auto-pause the row so the member list stays honest. This never costs a partner anything, because the
 member was already out of the pool.
 
 **The first draft was slower, and wrong about why.** It required four silent
@@ -351,7 +361,8 @@ to zero.
 Two commands, one outcome, because a returning member's model of the interface
 is "I am rejoining" and ours is "there is a state flag," and when those disagree
 the interface should bend. `/join` while paused resumes immediately, sets
-`eligible_at` to now, and does not ask the setup questions again, because they
+`eligible_at` to the later of now and their last pairing plus the cadence, and
+does not ask the setup questions again, because they
 were already answered. `/availability` and `/timezone` remain available for
 anything that changed.
 
@@ -361,9 +372,9 @@ so nobody comes back and is immediately re-introduced to the same person.
 `/forget` is the real deletion and is a different door.
 
 **Returning clears `needs_ack` and zeroes `checkins_ignored`.** A member
-auto-paused for going quiet who came back still sitting at one ignored ask would
-be a single missed reply from being auto-paused again, which is a trap rather
-than hygiene.
+auto-paused for going quiet who came back still sitting at two ignored asks
+would be auto-paused again on the next expiry, which is a trap rather than
+hygiene.
 
 This is hygiene, not enforcement. It costs a flag, a counter and a timestamp on
 the member row and reuses the follow-up specified in §5.
@@ -387,6 +398,7 @@ one_confirmed
   -> locked             second "Works for me"
   -> time_proposed      the other side counters instead of confirming
   -> released           48h after the latest proposal with no lock
+  -> released           no shared hours remain after a timezone change
 
 locked
   -> time_proposed      either side accepts a re-propose after a timezone change
@@ -433,9 +445,11 @@ minutes and the mask is hourly, so proposals land on the hour.
 
 **Empty overlap** cannot occur at creation: the matcher only forms feasible
 pairs (#16). It can still occur later, when a timezone change removes every
-shared hour from a pairing already in flight. That pairing goes to `released`,
+shared hour from a pairing not yet locked. That pairing goes to `released`,
 and the message says why rather than merely stepping back: no time works for
-both of you any more, the thread is yours.
+both of you any more, the thread is yours. A locked call is not released by a
+timezone change; it gets the `[ Keep it ]` / `[ Suggest a new time ]` offer
+below, and only a fresh proposal that finds no shared hours releases it.
 
 **Negotiation limit.** Each side gets one counter-proposal. Once both are spent
 with no lock, the pairing releases rather than continuing to negotiate. A
@@ -504,7 +518,8 @@ scheduled end, another job deletes the channel.
 
 A locked call that is later re-proposed (timezone change) posts a fresh .ics on
 the new lock, carrying the same `UID`, so a calendar that imports both keeps one
-entry. If the T-10 job has not yet run, nothing else needs undoing.
+entry. If the T-10 job has not yet run, it is cancelled and nothing else needs
+undoing.
 
 **Graceful degradation is a feature, not an error path.** A released pairing
 falls back to exactly the behavior of a scheduling-free tool: the thread exists,
@@ -524,7 +539,7 @@ members(guild_id, discord_user_id, state, timezone, tags, avoid_notes,
         needs_ack, checkins_ignored, checkin_sent_at, joined_at,
         PRIMARY KEY(guild_id, discord_user_id))
 pairings(id PK, guild_id, thread_id, voice_channel_id, state, novelty,
-         created_at)   -- novelty: fresh | held | reconnect | welcome
+         created_at)   -- novelty: fresh | held | reconnect | welcome | forced
 pairing_members(guild_id, pairing_id, discord_user_id)
 proposals(id PK, guild_id, pairing_id, start_utc, duration_min, state,
           proposed_by, created_at)
@@ -534,8 +549,8 @@ jobs(id PK, guild_id, kind, ref_id, run_at, state, created_at)
 ```
 
 There is no `rounds` table (#15). `members.eligible_at` is the entire cadence
-model. `pairings.novelty` records which branch of the novelty rule produced the
-pairing (`fresh | held | reconnect | welcome`), because the share of
+model. `pairings.novelty` records how the pairing was produced
+(`fresh | held | reconnect | welcome | forced`), because the share of
 reconnections over time is the number that says the pool needs to grow, and the
 share of welcomes says whether launch-week demand outran the pool. `welcome` and
 `last_welcome_at` are the volunteer flag and its seven-day throttle (#17).
@@ -557,8 +572,9 @@ refusal.
 
 **Durable scheduling.** Every time-based action is a row in `jobs` with a
 `run_at`, and a single ticker polls for what is due. Holding-window expiry,
-novelty-hold expiry, channel creation at T-10, channel deletion at T+60,
-follow-up at T+24h or release+7d, ask expiry at one cadence, thread archival. Not
+novelty-hold expiry, negotiation release at 48h, channel creation at T-10,
+channel deletion at T+60, follow-up at T+24h or release+7d, check-in send at
+`eligible_at`, ask expiry at one cadence, thread archival. Not
 in-process timers. This survives a restart, it scales from one guild to a
 thousand unchanged, and it makes every deferred action inspectable in one table.
 Correctness first, scale as a side effect.
@@ -573,11 +589,11 @@ Correctness first, scale as a side effect.
   confirmation says roughly when to expect the first introduction, states the
   default availability, names `/availability`, and states what the follow-up
   answer is used for (§9).
-- `/timezone`, `/availability`, `/welcome on|off`, `/pause`, `/resume`,
-  `/forget`.
+- `/timezone`, `/availability`, `/welcome on|off` (build 2, #19), `/pause`,
+  `/resume`, `/forget`.
 
 **Admin commands:** `/matchbook config`, `/matchbook status` (pool, holds,
-upcoming calls, reconnection share), `/matchbook pair <a> <b>` (force one).
+upcoming calls, reconnection share), `/matchbook pair <a> <b>` (force one; refused if the pair is infeasible).
 
 **Permissions requested:** View Channels, Send Messages, Create Private Threads,
 Send Messages in Threads, Manage Threads, Manage Channels, Connect. The README
@@ -616,29 +632,30 @@ brute-force optimal on every fixture of ten or fewer members and the gap is
 reported.
 
 **Eligibility**, against an injected clock: a newcomer is paired within the
-holding window whenever anyone else is eligible; a member alone past the window
+holding window whenever anyone else feasible is eligible; the novelty rule takes
+precedence over the holding window; a member alone past the window
 pulls the soonest-eligible member forward by no more than the limit; a newcomer
 alone past the window with no member within the pull-forward limit is paired
 with a welcomer, whose `eligible_at` does not move and who is not welcomed
 again within seven days; a newcomer with no welcomer and nobody in reach waits; no member is
 paired sooner than cadence minus the pull-forward limit after their last
-pairing; a member with an unmet active member somewhere is held rather than
+pairing, except as a welcomer; a welcomer with an open pairing is never chosen; a member with an unmet active member somewhere is held rather than
 repeated, for no longer than one cadence; a member who has met everyone is paired
 with their least-recent partner without holding; a synchronized twelve-member
 cohort is spread across the period within three cycles of simulated newcomers.
 
-**Jobs**: every job kind fires exactly once, at or after its `run_at`, and
-survives a simulated restart between scheduling and firing. No test sleeps.
+**Jobs**: every job kind fires at most once, at or after its `run_at`, never
+after cancellation, and survives a simulated restart between scheduling and firing. No test sleeps.
 
 **Scheduling** state machine is exhaustively tested over its transition table,
-including both release entries (48h; overlap lost after a timezone change), the
-voided confirmation on a
-counter, the negotiation limit, the locked-to-proposed re-propose path, and both
+including every release entry (48h from either negotiating state; overlap lost
+after a timezone change from either negotiating state), the voided confirmation
+on a counter, the negotiation limit, the locked-to-proposed re-propose path, and both
 follow-up triggers.
 
 **Availability**: mask intersection is commutative; a member on `Any reasonable
-hour` never constrains a pair beyond 09:00-21:00; a member with an empty mask
-is never paired and is told once; changing timezone moves the projected
+hour` never constrains a pair beyond 09:00-21:00; a member whose mask overlaps nobody's,
+empty or not, is never paired and is told once; changing timezone moves the projected
 UTC hours by exactly the offset delta and leaves the stored local mask untouched;
 the `schedulable` score equals shared hours over 168 and stays in 0..1; a new
 member's mask equals the default preset.
@@ -650,7 +667,7 @@ once when eligible; `Keep me in` puts them in the pool immediately; one ignored
 ask never auto-pauses; two does; a paused member is never in the pool;
 `/resume` and `/join` are equivalent for a paused member and both restore
 history intact; returning clears `needs_ack`, zeroes `checkins_ignored` and sets `eligible_at`
-to now; a
+to the later of now and last pairing plus cadence; a
 forgotten member who rejoins starts with no history at all.
 
 **End to end** runs a simulated month against a fake Discord adapter and a
@@ -671,7 +688,9 @@ The real Discord adapter stays thin enough to verify by using it.
 Stored: Discord user ID, opt-in state, timezone, self-declared tags and
 avoid-notes, a weekly availability pattern, an eligibility date, pairing
 history, proposed and confirmed times, one answer per member per pairing to "did
-you two connect," and the two hygiene counters. That is the entire schema.
+you two connect," a hygiene flag, counter and timestamp, a welcome-volunteer
+flag and its last-use date, the chosen availability preset, and a join date.
+That is the entire schema.
 
 Never stored: message content, voice, or anything from an operator's private
 knowledge base.
@@ -766,10 +785,11 @@ closed alternative. This section is written when there is something to run.
 
 Not announced as a program. One message in `#chatter` and a permanent line in
 the channel topic. The first members to join are paired with each other within
-the holding window, so the first introductions happen the first day. Before
-enrollment opens, ask two or three people who said yes early to run `/welcome
-on`, so the person who joins a week after launch does not wait on a cohort that
-all paired at once (#17).
+the holding window, so the first introductions happen the first day. The
+welcome pool (#17) is build 2, so in build 1 a late joiner may wait on a cohort
+that all paired at once; if that happens in the first week, it is the trigger
+named in §3 for pulling the pool into build 1. Once it ships, ask two or three
+people who said yes early to run `/welcome on`.
 
 Standing evidence as of 2026-09-12: within minutes of the idea being raised in
 chat, one member said they would participate outright and a second said they
@@ -782,7 +802,7 @@ signups.** Match count is vanity. If eight people opt in and two calls actually
 happen, that is the finding. When reconnections start appearing, the pool needs
 new members, and that is a recruitment brief handed over by the data.
 
-**The first pairings are round-robin (#19).** Build 1 runs no scorer, so early
+**The first pairings are round-robin (#19).** Build 1 runs no ranking scorer, only `round-robin`, so early
 pairings are the next feasible stranger in rotation. That is not the model
 working, and it is not meant to be: it is the loop being measured. Build 2's
 scorers get turned on once there are follow-up answers to learn from and a
