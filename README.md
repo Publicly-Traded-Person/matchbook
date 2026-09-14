@@ -118,12 +118,12 @@ Vague approval is not useful. These are the decisions most likely to be wrong:
    about a day rather than waiting for a pairing day, at the cost of the matcher
    only ever seeing the handful of people eligible right now instead of the
    whole pool. Fine at twelve members and at two hundred; is it fine at fifty?
-6. **Auto-pause after two ignored check-ins, with a partner's confirmation
-   counting as evidence you attended.** Standing enrollment fills with ghosts
-   because ignoring a bot is easier than telling it no. But someone who does
-   every call and never taps a button is not a ghost, and their partner's "yes
-   we met" proves it. Is that the right evidence test, and is roughly two months
-   of silence the right rope?
+6. **One silent pairing and you are asked before the next one, with a
+   partner's confirmation counting as evidence you attended.** Standing
+   enrollment fills with ghosts because ignoring a bot is easier than telling it
+   no. But someone who does every call and never taps a button is not a ghost,
+   and their partner's "yes we met" proves it. Is that the right evidence test,
+   and is one tap after a silent pairing the right price?
 7. **Two weeks between introductions by default, and wait-for-a-stranger over
    repeat.** With `n` members you have met everyone after `n-1` introductions,
    so a twelve-person server on a weekly gap runs out of strangers in under

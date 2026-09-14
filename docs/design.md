@@ -55,8 +55,9 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 ### In, v1
 
 - Standing opt-in, pause, resume, forget via slash commands
-- Auto-pause after two ignored check-ins, where a partner's confirmation counts
-  as evidence a member attended
+- An acknowledgment gate after one silent pairing (#18), where a partner's
+  confirmation counts as evidence a member attended; auto-pause only as
+  housekeeping
 - Rolling pairing: per-member eligibility, no batch rounds, a holding window, and
   a novelty rule that prefers waiting for a stranger over repeating, until there
   are no strangers left
@@ -284,24 +285,37 @@ showed up. The bot already stores it. Pausing someone while holding proof they
 attended would be the system ignoring its own data. A partner's "Not yet" is not
 evidence of attendance and clears nothing for either member.
 
-**The ladder, precisely.** `silent_streak` counts consecutive silent pairings.
-When it reaches two, the bot sends a check-in and **resets the streak to zero**;
-the check-in consumes the streak. If the check-in goes seven days unanswered,
-`checkins_ignored` increments. When `checkins_ignored` reaches two, the member is
-auto-paused. So auto-pause requires four silent pairings and two ignored
-check-ins, which at the default cadence is roughly two months of complete
-silence before the bot acts. Any qualifying evidence resets both counters.
+**The gate, precisely (#18).** A pairing that ends silent for a member sets
+`needs_ack` on their row. A member with `needs_ack` is not in the pool. When
+their `eligible_at` arrives, the bot sends one check-in:
 
 > Still up for these? You haven't been in the last couple of threads, and I'd
 > rather ask than guess.
 > `[ Keep me in ]`  `[ Pause me ]`
 
-The copy asks rather than charges, because the member most likely to see it is
-someone who did the calls and ignored the buttons.
+`Keep me in` clears the flag and they enter the pool that moment. `Pause me`
+pauses. Nothing else happens on a timer that costs anyone a turn: nobody is
+paired while an ask is unanswered. Any qualifying evidence, arriving at any
+point, clears the flag too. The copy asks rather than charges, because the
+member most likely to see it is someone who did the call and ignored the
+buttons.
 
-**The asymmetry justifies being this slow.** A false negative costs one partner's
-turn. A false positive ejects an engaged member and tells them, wrongly, that the
-system judged them absent. The second is much harder to undo.
+One housekeeping counter remains. An ask unanswered for one full cadence period
+counts as ignored (`checkins_ignored`); two of those auto-pause the row so the
+member list stays honest. This never costs a partner anything, because the
+member was already out of the pool.
+
+**The first draft was slower, and wrong about why.** It required four silent
+pairings and two ignored check-ins, about two months, before acting, on the
+argument that a false negative costs one partner's turn while a false positive
+ejects an engaged member. Both halves were right. The mistake was treating
+"ask before spending another partner's turn" and "eject" as the same act. They
+are not, and once they are separated the ask can come after one silent pairing
+at no cost to anyone real: the member who did the call and never tapped is
+still never asked, because their partner's Yes already vouched for them. The
+cost to a real member is one tap, once, after a pairing where nothing they did
+left a trace. The cost to their next partner drops from up to four burned turns
+to zero.
 
 **Coming back.** `/resume` restores standing enrollment, and so does `/join`.
 Two commands, one outcome, because a returning member's model of the interface
@@ -316,12 +330,13 @@ it sounds: `never-met` still knows who a returning member has already talked to,
 so nobody comes back and is immediately re-introduced to the same person.
 `/forget` is the real deletion and is a different door.
 
-**Returning resets both counters to zero.** A member auto-paused for going quiet
-who came back still sitting at one ignored check-in would be a single missed
-reply from being auto-paused again, which is a trap rather than hygiene.
+**Returning clears `needs_ack` and zeroes `checkins_ignored`.** A member
+auto-paused for going quiet who came back still sitting at one ignored ask would
+be a single missed reply from being auto-paused again, which is a trap rather
+than hygiene.
 
-This is hygiene, not enforcement. It costs two counters and a timestamp on the
-member row and reuses the follow-up specified in §5.
+This is hygiene, not enforcement. It costs a flag, a counter and a timestamp on
+the member row and reuses the follow-up specified in §5.
 
 ## 5. Scheduling model
 
@@ -475,7 +490,7 @@ is a painful migration; adding it now costs one word per table.
 guilds(guild_id PK, created_at)
 members(guild_id, discord_user_id, state, timezone, tags, avoid_notes,
         availability_mask, availability_preset, eligible_at,
-        silent_streak, checkins_ignored, checkin_sent_at, joined_at,
+        needs_ack, checkins_ignored, checkin_sent_at, joined_at,
         PRIMARY KEY(guild_id, discord_user_id))
 pairings(id PK, guild_id, thread_id, voice_channel_id, state, novelty,
          created_at)
@@ -493,9 +508,9 @@ pairing (`fresh | held | reconnect`), because the share of reconnections over
 time is the number that says the pool needs to grow.
 
 `members.state` is one of `active | paused`. A member who leaves is deleted, not
-flagged, so `/forget` is a real deletion. `silent_streak` and `checkins_ignored`
-are the two hygiene counters from §4a; `checkin_sent_at` is the most recent
-check-in, used to detect the seven-day expiry.
+flagged, so `/forget` is a real deletion. `needs_ack` and `checkins_ignored`
+are the hygiene fields from §4a; `checkin_sent_at` is the most recent ask, used
+to detect the one-cadence expiry.
 
 `availability_mask` is 168 characters of `0` or `1`, index 0 being Monday 00:00
 in the member's local time. A packed representation would be 21 bytes instead of
@@ -510,7 +525,7 @@ refusal.
 **Durable scheduling.** Every time-based action is a row in `jobs` with a
 `run_at`, and a single ticker polls for what is due. Holding-window expiry,
 novelty-hold expiry, channel creation at T-10, channel deletion at T+60,
-follow-up at T+24h or release+7d, check-in expiry at +7d, thread archival. Not
+follow-up at T+24h or release+7d, ask expiry at one cadence, thread archival. Not
 in-process timers. This survives a restart, it scales from one guild to a
 thousand unchanged, and it makes every deferred action inspectable in one table.
 Correctness first, scale as a side effect.
@@ -591,12 +606,14 @@ UTC hours by exactly the offset delta and leaves the stored local mask untouched
 the `schedulable` score equals shared hours over 168 and stays in 0..1; a new
 member's mask equals the default preset.
 
-**Enrollment hygiene**: any of the evidence types resets both counters to zero; a
-partner's Yes clears the strike for both members while a partner's Not yet
-clears it for neither; sending a check-in resets `silent_streak`; one ignored
-check-in never auto-pauses; two does; a paused member is never in the pool;
+**Enrollment hygiene**: any of the evidence types clears `needs_ack`; a
+partner's Yes clears it for both members while a partner's Not yet clears it for
+neither; a member with `needs_ack` is never in the pool and is asked exactly
+once when eligible; `Keep me in` puts them in the pool immediately; one ignored
+ask never auto-pauses; two does; a paused member is never in the pool;
 `/resume` and `/join` are equivalent for a paused member and both restore
-history intact; returning zeroes both counters and sets `eligible_at` to now; a
+history intact; returning clears `needs_ack`, zeroes `checkins_ignored` and sets `eligible_at`
+to now; a
 forgotten member who rejoins starts with no history at all.
 
 **End to end** runs a simulated month against a fake Discord adapter and a
