@@ -1,0 +1,63 @@
+Sep 14 21:58:22 fleet-r1-2609142157-8fbd bootstrap.sh[970]: 2026-09-14T21:58:22Z bootstrap: comment: run=1 plan=8f03ca04a1e0f935ef0cde36a42cbc515cdf9349 target=publicly-traded-person/matchbook base=28127363a221f2aee933e7fb75e450cfd079c0fe engine=c3c8fa9bbf1d6a339b81a81234a41066720dd94f (unit run=1)
+Sep 14 21:58:22 fleet-r1-2609142157-8fbd bootstrap.sh[983]: 2026-09-14T21:58:22Z bootstrap: cloning engine at c3c8fa9bbf1d6a339b81a81234a41066720dd94f
+Sep 14 21:58:26 fleet-r1-2609142157-8fbd bootstrap.sh[999]: 2026-09-14T21:58:26Z bootstrap: exec /home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/sandbox-boot.sh boot
+Sep 14 21:58:26 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:26Z status server: fleet-status.service already active
+Sep 14 21:58:26 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:26Z status: state=booting phase=reading the assignment
+Sep 14 21:58:27 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:27Z reflection: name=fleet-r1-2609142157-8fbd
+Sep 14 21:58:27 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:27Z status: state=booting phase=assignment read
+Sep 14 21:58:27 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:27Z integrations: no two github integrations name one repository
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:28Z target: cloned through github.int.exe.xyz
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: Note: switching to '28127363a221f2aee933e7fb75e450cfd079c0fe'.
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: You are in 'detached HEAD' state. You can look around, make experimental
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: changes and commit them, and you can discard any commits you make in this
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: state without impacting any branches by switching back to a branch.
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: If you want to create a new branch to retain commits you create, you may
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: do so (now or later) by using -c with the switch command. Example:
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]:   git switch -c <new-branch-name>
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: Or undo this operation with:
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]:   git switch -
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: Turn off this advice by setting config variable advice.detachedHead to false
+Sep 14 21:58:28 fleet-r1-2609142157-8fbd bootstrap.sh[1140]: HEAD is now at 2812736 Seed a green Bun/TypeScript baseline and the shared types seam
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[1141]: From https://github.int.exe.xyz/publicly-traded-person/matchbook
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[1141]:  * branch            ultra/plan-run-1 -> FETCH_HEAD
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:29Z plan: ultra/plan-run-1 at 8f03ca04a1e0f935ef0cde36a42cbc515cdf9349 -> /home/exedev/plans/run-1.md
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:29Z plan: verdicts -> /home/exedev/plans/run-1.gate-verdicts.json
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:29Z plan: kata -> /home/exedev/plans/run-1.kata.json
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:29Z evidence: no ultra/evidence-run-1 yet — parenting it on the plan commit
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[1167]: Preparing worktree (detached HEAD 8f03ca0)
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[1169]: HEAD is now at 8f03ca0 ultrapowers plan run-1
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:29Z kata: https://kata.int.exe.xyz answered its ping
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:29Z engine: /home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f
+Sep 14 21:58:29 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:29Z status: state=running phase=engine starting
+Sep 14 21:58:30 fleet-r1-2609142157-8fbd bootstrap.sh[1219]: curl: (22) The requested URL returned error: 403
+Sep 14 21:58:30 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:30Z kata: export failed (curl exit 22) — previous kata.jsonl kept
+Sep 14 21:58:30 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:30Z evidence: status.json
+Sep 14 21:58:30 fleet-r1-2609142157-8fbd bootstrap.sh[1236]: [detached HEAD 0bcfa2a] run-1: running
+Sep 14 21:58:30 fleet-r1-2609142157-8fbd bootstrap.sh[1236]:  1 file changed, 1 insertion(+)
+Sep 14 21:58:30 fleet-r1-2609142157-8fbd bootstrap.sh[1236]:  create mode 100644 .ultrapowers/runs/1/status.json
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[1242]: remote: This repository moved. Please use the new location:
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[1242]: remote:   https://github.com/Publicly-Traded-Person/matchbook.git
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[1242]: remote:
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[1242]: remote: Create a pull request for 'ultra/evidence-run-1' on GitHub by visiting:
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[1242]: remote:      https://github.com/Publicly-Traded-Person/matchbook/pull/new/ultra/evidence-run-1
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[1242]: remote:
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[1238]: To https://github.int.exe.xyz/publicly-traded-person/matchbook.git
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[1238]:  * [new branch]      HEAD -> ultra/evidence-run-1
+Sep 14 21:58:31 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:31Z evidence: pushed to ultra/evidence-run-1
+Sep 14 21:58:32 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:32Z claude auth status: {   "loggedIn": true,   "authMethod": "oauth_token",   "apiProvider": "firstParty",   "analyticsDisabled": false,   "projectsDirectory": "/home/exedev/.claude/projects" }
+Sep 14 21:58:32 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:32Z claude version: 2.1.267 (Claude Code)
+Sep 14 21:58:32 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:58:32Z bearer probe: alive
+Sep 14 21:59:07 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:07Z engine: exited 1 (output in /home/exedev/www/engine.log)
+Sep 14 21:59:07 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:07Z kata: export failed (curl exit 22) — previous kata.jsonl kept
+Sep 14 21:59:07 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:07Z evidence: claude-version.txt engine.log events.jsonl receipt.json status.json
+Sep 14 21:59:07 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:07Z status: state=failed phase=engine exit 1
+Sep 14 21:59:08 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:08Z kata: run issue metadata write (failed) refused — curl exit 22, recorded, continuing
+Sep 14 21:59:08 fleet-r1-2609142157-8fbd bootstrap.sh[1917]: curl: (22) The requested URL returned error: 403
+Sep 14 21:59:08 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:08Z kata: export failed (curl exit 22) — previous kata.jsonl kept
+Sep 14 21:59:08 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:08Z evidence: claude-version.txt engine.log events.jsonl receipt.json status.json
+Sep 14 21:59:08 fleet-r1-2609142157-8fbd bootstrap.sh[1936]: [detached HEAD eb2c287] run-1: failed (engine exit 1)
+Sep 14 21:59:08 fleet-r1-2609142157-8fbd bootstrap.sh[1936]:  3 files changed, 36 insertions(+), 1 deletion(-)
+Sep 14 21:59:09 fleet-r1-2609142157-8fbd bootstrap.sh[1942]: remote: This repository moved. Please use the new location:
+Sep 14 21:59:09 fleet-r1-2609142157-8fbd bootstrap.sh[1942]: remote:   https://github.com/Publicly-Traded-Person/matchbook.git
+Sep 14 21:59:09 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:09Z evidence: pushed to ultra/evidence-run-1
+Sep 14 21:59:09 fleet-r1-2609142157-8fbd bootstrap.sh[959]: 2026-09-14T21:59:09Z notify: run-1 failed — publicly-traded-person/matchbook — engine exited 1
