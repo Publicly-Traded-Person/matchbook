@@ -88,3 +88,5 @@
 {"kind":"driver:approved","stamp":"run-4","integrationBranch":"ultra/integration-run-4","id":"01M2H3SNWT000042FNX6RSP302","ts":1789428291482}
 {"kind":"run:open","runId":"run-4","base":"720ab2dc7c78cd9a21c2fa85e2688499d25967ba","source":"fleet/publish-fold.mjs","id":"01M2H3SPST0000MY44E6T1HYC9","ts":1789428292410}
 {"kind":"driver:publish-fold","run":"4","attempt":"1","base":"720ab2dc7c78cd9a21c2fa85e2688499d25967ba","tip":"720ab2dc7c78cd9a21c2fa85e2688499d25967ba","candidate":"a98b33568bf6394f4875646393b9f69e31e174ef","pathsJoined":0,"pathsConflicted":0,"resolversDispatched":0,"resolverRetries":0,"suite":"none","disposition":"nothing to join","checks":[],"checkRetries":0,"id":"01M2H3SQ5P0000P2VRE8P93ND0","ts":1789428292790}
+{"kind":"publish:pr","url":"https://github.com/Publicly-Traded-Person/matchbook/pull/24","number":24,"draft":false,"id":"01M2H3SWKB0000WR141EYV9NXY","ts":1789428298347}
+{"kind":"publish:merge","sha":"91061a7030e214cc0e06ba9b57b0014b1ab25fbb","id":"01M2H3SZKA00004W75MGY65V8V","ts":1789428301418}
