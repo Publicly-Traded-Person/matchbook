@@ -1,0 +1,22 @@
+[
+  { "id": "m01", "timezone": "Europe/Belgrade", "preset": "any-reasonable-hour" },
+  { "id": "m02", "timezone": "America/New_York", "preset": "any-reasonable-hour" },
+  { "id": "m03", "timezone": "Europe/London", "preset": "evenings-only" },
+  { "id": "m04", "timezone": "Asia/Tokyo", "preset": "any-reasonable-hour" },
+  { "id": "m05", "timezone": "Etc/GMT+8", "preset": "any-reasonable-hour" },
+  { "id": "m06", "timezone": "America/Los_Angeles", "preset": "any-reasonable-hour" },
+  { "id": "m07", "timezone": "Europe/Belgrade", "preset": "weekdays-9-5-off" },
+  { "id": "m08", "timezone": "Etc/GMT-9", "preset": "any-reasonable-hour" },
+  { "id": "m09", "timezone": "America/New_York", "preset": "evenings-only" },
+  { "id": "m10", "timezone": "Australia/Sydney", "preset": "any-reasonable-hour" },
+  { "id": "m11", "timezone": "Europe/London", "preset": "any-reasonable-hour" },
+  { "id": "m12", "timezone": "America/Sao_Paulo", "preset": "any-reasonable-hour" },
+  { "id": "m13", "timezone": "Europe/Belgrade", "preset": "weekends-only" },
+  { "id": "m14", "timezone": "America/Los_Angeles", "preset": "evenings-only" },
+  { "id": "m15", "timezone": "Asia/Kolkata", "preset": "any-reasonable-hour" },
+  { "id": "m16", "timezone": "Europe/London", "preset": "weekdays-9-5-off" },
+  { "id": "m17", "timezone": "America/New_York", "preset": "any-reasonable-hour" },
+  { "id": "m18", "timezone": "Asia/Tokyo", "preset": "evenings-only" },
+  { "id": "m19", "timezone": "Europe/Belgrade", "preset": "any-reasonable-hour" },
+  { "id": "m20", "timezone": "Pacific/Auckland", "preset": "weekends-only" }
+]
