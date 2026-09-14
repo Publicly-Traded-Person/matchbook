@@ -200,3 +200,23 @@
 {"kind":"transcript:slice","label":"review:6:1","sessionId":"d7dd21ed-cb79-4d57-9a41-5ee1b57698ec","bytes":11487,"id":"01M2GZNDGX0000RZPCPABA6VBA","ts":1789423957533}
 {"kind":"worker:end","label":"review:9:1","role":"reviewer","sessionId":"4c13a210-935b-4fb1-828d-fc833e23ecf6","exitCode":0,"timedOut":false,"outcome":"ok","class":"success","status":null,"meter":{"input":8058,"output":11252,"cacheRead":447752,"cacheCreation":45201,"costUsd":0.997476,"models":["claude-opus-5"]},"id":"01M2GZQGV500005C6CAKR6S4YG","ts":1789424026469}
 {"kind":"transcript:slice","label":"review:9:1","sessionId":"4c13a210-935b-4fb1-828d-fc833e23ecf6","bytes":11305,"id":"01M2GZQGV80000TEQQVFDKSFW6","ts":1789424026472}
+{"kind":"worker:end","label":"review:5:1","role":"reviewer","sessionId":"1b665697-79f8-426c-95f3-119695607a25","exitCode":0,"timedOut":false,"outcome":"ok","class":"success","status":null,"meter":{"input":8011,"output":10607,"cacheRead":336610,"cacheCreation":34156,"costUsd":0.8150949999999999,"models":["claude-opus-5"]},"id":"01M2GZRYGT0000B9GJ1BE1AJ3R","ts":1789424073242}
+{"kind":"transcript:slice","label":"review:5:1","sessionId":"1b665697-79f8-426c-95f3-119695607a25","bytes":10525,"id":"01M2GZRYGW0000GG5F5MT4P42H","ts":1789424073244}
+{"kind":"driver:wave-adopted","wave":1,"tasks":["1","2","3","5","6","7","8","9","10","11","12"],"headSha":"0356a39e73ab99965b68f9f371ce16e9cbc827e5","id":"01M2GZS1TZ0000Y6G86H60J1XQ","ts":1789424076639}
+{"kind":"driver:integrated-clean","wave":1,"removed":0,"id":"01M2GZS1V5000083ARCT5HDEKS","ts":1789424076645}
+{"kind":"driver:integrated-check","cmd":"bunx tsc --noEmit && bun test","exit":0,"minor":false,"wave":1,"id":"01M2GZS3M000005VP4SC3864FH","ts":1789424078464}
+{"kind":"driver:integrated-check","cmd":"test -z \"$(grep -rl 'discord.js' src --include=*.ts | grep -v -e '^src/adapters/discord/' -e '^src/main.ts')\"","exit":0,"minor":false,"wave":1,"id":"01M2GZS3M80000XR9WEQEWC6RD","ts":1789424078472}
+{"kind":"driver:integrated-check","cmd":"test -z \"$(grep -rn -e '—' src config.example.toml README.md Dockerfile docker-compose.yml 2>/dev/null)\"","exit":0,"minor":false,"wave":1,"id":"01M2GZS3MF0000ZVN0HSYBVSWW","ts":1789424078479}
+{"kind":"driver:integrated-check","cmd":"test -z \"$(grep -rniE 'kmikeym|shareholder|experiment' src config.example.toml 2>/dev/null)\"","exit":0,"minor":false,"wave":1,"id":"01M2GZS3MP0000WED94NAJXG7Z","ts":1789424078486}
+{"kind":"engine:phase","phase":"Wave 2","id":"01M2GZS40V00001VE4KNJMG01C","ts":1789424078875}
+{"kind":"engine:log","line":"task 13 skipped: upstream dependency failed","id":"01M2GZS4FC0000W0DV9V93QZCW","ts":1789424079340}
+{"kind":"engine:log","line":"wave 2 merge skipped: no mergeable results","id":"01M2GZS4FC0001GXT9T1VG2SZK","ts":1789424079340}
+{"kind":"engine:phase","phase":"Wave 3","id":"01M2GZS4FC0002PPHCH1P36NS8","ts":1789424079340}
+{"kind":"engine:log","line":"task 14 skipped: upstream dependency failed","id":"01M2GZS4VS0000M6NQ1P4YJ96Y","ts":1789424079737}
+{"kind":"engine:log","line":"wave 3 merge skipped: no mergeable results","id":"01M2GZS4VS00018G39YVV1M6GJ","ts":1789424079737}
+{"kind":"driver:stage","stage":"engine-done","detail":"report saved","id":"01M2GZS53F0000A3DGSHPH5GD1","ts":1789424079983}
+{"kind":"driver:stage","stage":"finalize","id":"01M2GZS55P00003X0YJNZTTMA4","ts":1789424080054}
+{"kind":"driver:stage","stage":"gate","id":"01M2GZS57E0000GV8AMB7Q3710","ts":1789424080110}
+{"kind":"driver:fail","verdict":"gate-blocked","detail":"ultra_gate exited 1 — gate receipt is the terminal artifact","id":"01M2GZS5AS0000DTPR3DJBXWP7","ts":1789424080217}
+{"kind":"run:open","runId":"run-2","base":"28127363a221f2aee933e7fb75e450cfd079c0fe","source":"fleet/publish-fold.mjs","id":"01M2GZS6050000XHXWPK8GZZG5","ts":1789424080901}
+{"kind":"driver:publish-fold","run":"2","attempt":"1","base":"28127363a221f2aee933e7fb75e450cfd079c0fe","tip":"28127363a221f2aee933e7fb75e450cfd079c0fe","candidate":"0356a39e73ab99965b68f9f371ce16e9cbc827e5","pathsJoined":0,"pathsConflicted":0,"resolversDispatched":0,"resolverRetries":0,"suite":"none","disposition":"nothing to join","checks":[],"checkRetries":0,"id":"01M2GZS6DX00007JM4F61X5TMD","ts":1789424081341}

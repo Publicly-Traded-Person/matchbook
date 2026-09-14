@@ -1,0 +1,61 @@
+{
+  "mode": "gate",
+  "stamp": "run-2",
+  "reportPath": "/home/exedev/target/.claude/ultrapowers/run-run-2/report.json",
+  "branch": "ultra/integration-run-2",
+  "gateCheck": {
+    "verdict": "BLOCKED",
+    "checks": [
+      {
+        "name": "report-parse",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "clean-tree",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "wave-merges",
+        "ok": false,
+        "detail": "merge-sha guard unavailable \u2014 result lacks waveMerges[last].headSha (budget-exhausted or SKIPPED-only run); inspect and redirect/re-run"
+      },
+      {
+        "name": "head-match",
+        "ok": false,
+        "detail": "skipped \u2014 no recorded merge headSha to compare"
+      },
+      {
+        "name": "git-verified",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "ancestry",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "deliverables",
+        "ok": false,
+        "detail": "failed/blocked tasks left declared deliverables unproduced: [{\"task\": \"4\", \"files\": [\"src/core/enrollment.ts\", \"tests/enrollment.test.ts\"]}, {\"task\": \"13\", \"files\": [\"src/app/handlers.ts\", \"src/app/index.ts\", \"src/app/jobs.ts\", \"tests/app.test.ts\", \"tests/e2e-month.test.ts\", \"tests/fixtures/members-20.json\", \"tests/helpers/fake-discord.ts\"]}, {\"task\": \"14\", \"files\": [\"src/adapters/discord/client.ts\", \"src/main.ts\", \"tests/discord-client.test.ts\"]}]"
+      }
+    ],
+    "acks": [
+      {
+        "type": "coverage",
+        "detail": "green suite but 11/14 tasks merged \u2014 a passing suite over an incomplete merge is a false-green"
+      }
+    ],
+    "notes": [],
+    "repo": "/home/exedev/target"
+  },
+  "gateCheckExit": 1,
+  "suite": {
+    "passed": true,
+    "unattributed": [],
+    "output": "\n(pass) leg (d) [M4] the calendar file is one VEVENT with the seven lines > carries VERSION:2.0 and the Matchbook PRODID [M4, Context] [0.02ms]\n(pass) leg (e) [M5] no ORGANIZER or ATTENDEE, and UID survives a re-lock > no line begins with ORGANIZER or ATTENDEE [M5] [0.06ms]\n(pass) leg (e) [M5] no ORGANIZER or ATTENDEE, and UID survives a re-lock > two events one day apart share the UID line byte for byte [M5] [0.09ms]\n(pass) leg (e) [M5] no ORGANIZER or ATTENDEE, and UID survives a re-lock > the two outputs really do differ in their start [M5] [0.05ms]\n(pass) leg (f) [M6] formatIcsTime > formats the fixed instant as 20260917T190000Z [M6] [0.02ms]\n\ntests/storage.test.ts:\n(pass) M1: openStorage(':memory:') builds the eight guild-scoped tables > leg (a): the sorted table names from sqlite_master are exactly the eight [0.90ms]\n(pass) M1: openStorage(':memory:') builds the eight guild-scoped tables > leg (a): PRAGMA table_info lists a guild_id column on each of the eight [0.42ms]\n(pass) M1: openStorage(':memory:') builds the eight guild-scoped tables > leg (a): each table carries the columns the data model names [0.41ms]\n(pass) M1: openStorage(':memory:') builds the eight guild-scoped tables > leg (a): SCHEMA_SQL is the eight CREATE TABLE IF NOT EXISTS statements, in order [0.08ms]\n(pass) M2: member rows round-trip and stay inside their guild > leg (b): a fully populated MemberRow reads back field for field [0.61ms]\n(pass) M2: member rows round-trip and stay inside their guild > leg (b): a second upsert with a changed state reads back changed [0.48ms]\n(pass) M2: member rows round-trip and stay inside their guild > leg (b): getMember for another guild is null and listMembers('g2') is [] [0.47ms]\n(pass) M3: pairings and their members > leg (c): insertPairing then getPairing and pairingMembers round-trip [1.11ms]\n(pass) M3: pairings and their members > leg (c): pairingsOf returns a member's pairings newest first [0.57ms]\n(pass) M3: pairings and their members > leg (c): openPairings returns the five non-terminal states and no others [0.67ms]\n(pass) M3: pairings and their members > leg (c): touchPairingMember records lastActivityAt for that member only [0.48ms]\n(pass) M3: pairings and their members > leg (c): pairingByThread finds by threadId and is null for an unknown thread [0.41ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): a proposal, a confirmation and an outcome each read back whole [0.68ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): updateProposal with state 'superseded' reads back superseded [0.43ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): allOutcomes returns every outcome of the guild [0.50ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): the member's own rows are gone [0.75ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): proposals they authored keep the row with proposedBy null [0.56ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): pending jobs about the member are cancelled, jobs about the pairing are not [0.63ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): the partner's row, the pairing and the partner's outcome are untouched [0.70ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): dueJobs(now) is pending jobs with runAt <= now, ascending by runAt then id [0.38ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): completeJob returns true once and false thereafter [0.40ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): cancelJobs returns the count and drops them out of dueJobs [0.47ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): pendingJobs is guild-scoped [0.38ms]\n(pass) M7: the SQL stays generic > leg (g): no AUTOINCREMENT, WITHOUT ROWID, json_extract or STRICT, and only the two pragmas [0.31ms]\n\n 240 pass\n 0 fail\n 1768 expect() calls\nRan 240 tests across 11 files. [225.00ms]\n"
+  },
+  "verdict": "BLOCKED"
+}
