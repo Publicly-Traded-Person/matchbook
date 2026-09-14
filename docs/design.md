@@ -54,6 +54,16 @@ across timezones, and has exactly one working synchronous ritual already (poker)
 
 ### In, v1
 
+v1 ships in two builds (#19). **Build 1 is the shortest loop that produces a
+completed call and a measured answer**: introduction, agreed time, call, "did
+you two connect?" It runs the `round-robin` strategy behind the feasibility
+precondition and nothing that exists only to rank pairs better. **Build 2** turns
+on the scorers. Items below marked *(build 2)* are specified now, built second,
+and off by default until build 1 has produced pairings. `round-robin` plus
+feasibility already gives a stranger every time until the pool is exhausted, so
+the pilot cohort loses nothing by the deferral. What it buys is that the first
+real data measures the loop, not the loop plus weights nobody has evidence for.
+
 - Standing opt-in, pause, resume, forget via slash commands
 - An acknowledgment gate after one silent pairing (#18), where a partner's
   confirmation counts as evidence a member attended; auto-pause only as
@@ -62,7 +72,12 @@ across timezones, and has exactly one working synchronous ritual already (poker)
   a novelty rule that prefers waiting for a stranger over repeating, until there
   are no strangers left
 - Scored matching with four bundled strategies and weighted composition; every
-  strategy declares the signals it reads
+  strategy declares the signals it reads *(build 2: `never-met`,
+  `interest-overlap`, `schedulable`; the interface, `round-robin` and the
+  feasibility precondition are build 1)*
+- Self-declared interests on `/join` *(build 2, with `interest-overlap`)*
+- The volunteer welcome pool (#17) *(build 2, pulled into build 1 only if the
+  first week shows a newcomer waiting)*
 - Private thread per pairing
 - Per-member weekly availability (presets plus a custom editor)
 - Proposed meeting time drawn from real mutual availability, negotiation, lock-in
@@ -553,7 +568,7 @@ Correctness first, scale as a side effect.
 **Member commands.**
 
 - `/join` with options `timezone` (required, autocomplete), `interests`
-  (optional text), `avoid` (optional text). Re-running it with any option
+  (optional text, build 2), `avoid` (optional text). Re-running it with any option
   updates just that option; a paused member running it is resumed. The
   confirmation says roughly when to expect the first introduction, states the
   default availability, names `/availability`, and states what the follow-up
@@ -640,6 +655,14 @@ forgotten member who rejoins starts with no history at all.
 
 **End to end** runs a simulated month against a fake Discord adapter and a
 synthetic 20-member fixture guild, with no network.
+
+**Build 1 scope (#19):** the matching properties that concern feasibility and
+`round-robin`, all of eligibility except the welcome pool, jobs, the whole
+scheduling machine, availability, hygiene, and end to end. The scorer
+properties (symmetry, weight normalization, `Context` contents, greedy vs
+optimal) and the welcome-pool cases are build 2 and are written against the
+interface before build 1 ships, so that build 2 is adding implementations, not
+tests.
 
 The real Discord adapter stays thin enough to verify by using it.
 
@@ -759,11 +782,11 @@ signups.** Match count is vanity. If eight people opt in and two calls actually
 happen, that is the finding. When reconnections start appearing, the pool needs
 new members, and that is a recruitment brief handed over by the data.
 
-**The first pairings have no history.** `never-met` scores every stranger
-identically, so early pairings are decided by how much availability the two
-share and by declared interests. That is not random, but it is not yet the model working either. It
-gets meaningfully better after a few pairings per member, once there are
-follow-up answers to learn from. Say this out loud rather than let an early
+**The first pairings are round-robin (#19).** Build 1 runs no scorer, so early
+pairings are the next feasible stranger in rotation. That is not the model
+working, and it is not meant to be: it is the loop being measured. Build 2's
+scorers get turned on once there are follow-up answers to learn from and a
+completion rate to compare against. Say this out loud rather than let an early
 pairing look like a bug.
 
 ## 13. Where the open items live
