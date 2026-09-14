@@ -4,3 +4,20 @@ run-main: kata — record /home/exedev/plans/run-1.kata.json → https://kata.in
 run-main: tiers — 14 null tier slot(s) stamped mostCapable (uniform driver fill; per-task tier is the intent document's slot, #243)
 run-main: provision — BASE 28127363a221f2aee933e7fb75e450cfd079c0fe; 14 task clone(s) + integration
 run-main: engine — waves 12/1/1, width bound 12, patch input armed
+run-main: engine-crashed — Error: run-engine: kata-revision-mismatch task 1: recorded 1 found null
+    at kataFatal (file:///home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/run-engine.mjs:1019:15)
+    at runTaskInner (file:///home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/run-engine.mjs:1732:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async runTask (file:///home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/run-engine.mjs:2662:14)
+    at async file:///home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/run-main.mjs:593:20
+    at async Promise.all (index 0)
+    at async file:///home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/run-main.mjs:596:3
+    at async runEngine (file:///home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/run-engine.mjs:3125:28)
+    at async runMainInner (file:///home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/run-main.mjs:913:14)
+    at async runMain (file:///home/exedev/engines/c3c8fa9bbf1d6a339b81a81234a41066720dd94f/fleet/run-main.mjs:614:12)
+Finished with result: exit-code
+Main processes terminated with: code=exited/status=1
+Service runtime: 35.430s
+CPU time consumed: 41.167s
+Memory peak: 1.3G
+Memory swap peak: 0B
