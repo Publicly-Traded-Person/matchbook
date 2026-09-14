@@ -76,7 +76,7 @@ free on weekend mornings. The first build pairs by rotation; the scorers switch
 on once there are outcomes to compare against.
 
 And there is no pairing day. You join, and within about a day you have someone
-to talk to, as long as someone is free to meet you. After that, one introduction every two weeks, measured from your
+to talk to, as long as someone is free to meet you. After that, at most one introduction every two weeks, measured from your
 last one, not from a calendar. When the only people left are ones you have
 already met, Matchbook waits for a stranger if one exists, and reconnects you
 with an old partner if none does. It tells you which.

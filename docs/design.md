@@ -335,14 +335,14 @@ their `eligible_at` arrives, the bot sends a check-in:
 
 `Keep me in` clears the flag and they enter the pool that moment. `Pause me`
 pauses. Nothing else happens on a timer that costs anyone a turn: nobody is
-paired while an ask is unanswered. Any qualifying evidence, arriving at any
+paired while a check-in is unanswered. Any qualifying evidence, arriving at any
 point, clears the flag too. The copy asks rather than charges, because the
 member most likely to see it is someone who did the call and ignored the
 buttons.
 
-One housekeeping counter remains. An ask unanswered for one full cadence period
-counts as ignored (`checkins_ignored` increments) and the ask is re-sent once;
-two ignored asks auto-pause the row so the member list stays honest. This never costs a partner anything, because the
+One housekeeping counter remains. A check-in unanswered for one full cadence period
+counts as ignored (`checkins_ignored` increments) and the check-in is re-sent once;
+two ignored check-ins auto-pause the row so the member list stays honest. This never costs a partner anything, because the
 member was already out of the pool.
 
 **The first draft was slower, and wrong about why.** It required four silent
@@ -350,7 +350,7 @@ pairings and two ignored check-ins, about two months, before acting, on the
 argument that a false negative costs one partner's turn while a false positive
 ejects an engaged member. Both halves were right. The mistake was treating
 "ask before spending another partner's turn" and "eject" as the same act. They
-are not, and once they are separated the ask can come after one silent pairing
+are not, and once they are separated the check-in can come after one silent pairing
 at no cost to anyone real: the member who did the call and never tapped is
 still never asked, because their partner's Yes already vouched for them. The
 cost to a real member is one tap, once, after a pairing where nothing they did
@@ -372,7 +372,7 @@ so nobody comes back and is immediately re-introduced to the same person.
 `/forget` is the real deletion and is a different door.
 
 **Returning clears `needs_ack` and zeroes `checkins_ignored`.** A member
-auto-paused for going quiet who came back still sitting at two ignored asks
+auto-paused for going quiet who came back still sitting at two ignored check-ins
 would be auto-paused again on the next expiry, which is a trap rather than
 hygiene.
 
@@ -557,7 +557,7 @@ share of welcomes says whether launch-week demand outran the pool. `welcome` and
 
 `members.state` is one of `active | paused`. A member who leaves is deleted, not
 flagged, so `/forget` is a real deletion. `needs_ack` and `checkins_ignored`
-are the hygiene fields from §4a; `checkin_sent_at` is the most recent ask, used
+are the hygiene fields from §4a; `checkin_sent_at` is the most recent check-in, used
 to detect the one-cadence expiry.
 
 `availability_mask` is 168 characters of `0` or `1`, index 0 being Monday 00:00
@@ -574,7 +574,7 @@ refusal.
 `run_at`, and a single ticker polls for what is due. Holding-window expiry,
 novelty-hold expiry, negotiation release at 48h, channel creation at T-10,
 channel deletion at T+60, follow-up at T+24h or release+7d, check-in send at
-`eligible_at`, ask expiry at one cadence, thread archival. Not
+`eligible_at`, check-in expiry at one cadence, thread archival. Not
 in-process timers. This survives a restart, it scales from one guild to a
 thousand unchanged, and it makes every deferred action inspectable in one table.
 Correctness first, scale as a side effect.
@@ -664,7 +664,7 @@ member's mask equals the default preset.
 partner's Yes clears it for both members while a partner's Not yet clears it for
 neither; a member with `needs_ack` is never in the pool and is asked exactly
 once when eligible; `Keep me in` puts them in the pool immediately; one ignored
-ask never auto-pauses; two does; a paused member is never in the pool;
+check-in never auto-pauses; two does; a paused member is never in the pool;
 `/resume` and `/join` are equivalent for a paused member and both restore
 history intact; returning clears `needs_ack`, zeroes `checkins_ignored` and sets `eligible_at`
 to the later of now and last pairing plus cadence; a
