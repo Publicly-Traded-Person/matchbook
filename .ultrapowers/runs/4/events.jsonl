@@ -33,3 +33,6 @@
 {"kind":"engine:phase","phase":"Wave 2","id":"01M2H1NAAD0000KK7HARHNPC1W","ts":1789426051405}
 {"kind":"worker:start","label":"exam:13","role":"examiner","sessionId":"9f8fd4d1-222a-4b77-94a8-7510457fe350","cwd":"/home/exedev/target/.claude/ultrapowers/run-run-4/clones/exam-13","model":"opus","id":"01M2H1NDWJ00002KSD1RQJ6ZA5","ts":1789426055058}
 {"kind":"worker:start","label":"impl:13","role":"implementer","sessionId":"1600922d-224b-4b20-8eee-e38d71ccd5f3","cwd":"/home/exedev/target/.claude/ultrapowers/run-run-4/clones/task-13","model":"opus","id":"01M2H1NDWM00004PKKJGK7QXBC","ts":1789426055060}
+{"kind":"worker:end","label":"exam:13","role":"examiner","sessionId":"9f8fd4d1-222a-4b77-94a8-7510457fe350","exitCode":0,"timedOut":false,"outcome":"ok","class":"success","status":null,"meter":{"input":34,"output":76993,"cacheRead":1745856,"cacheCreation":130211,"costUsd":4.100033000000001,"models":["claude-opus-5"]},"id":"01M2H2H1XN0000BY209A7TBX3J","ts":1789426960309}
+{"kind":"transcript:slice","label":"exam:13","sessionId":"9f8fd4d1-222a-4b77-94a8-7510457fe350","bytes":11626,"id":"01M2H2H1Y00000B3WPHE1TYCTZ","ts":1789426960320}
+{"kind":"driver:attention","task":"13","attention":"needs-human","msg":"session ended without hand-off","actor":"","id":"01M2H2HC010000H1P5DC7GT3GJ","ts":1789426970625}
