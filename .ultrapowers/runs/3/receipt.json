@@ -1,0 +1,543 @@
+{
+  "ok": true,
+  "stamp": "run-3",
+  "stages": [
+    {
+      "stage": "fleet-run",
+      "ok": true,
+      "detail": "fleet run run-3"
+    },
+    {
+      "stage": "git-repo",
+      "ok": true,
+      "detail": "/home/exedev/target"
+    },
+    {
+      "stage": "worktree-probe",
+      "ok": true,
+      "detail": "worktree capability verified (probe cut and removed)"
+    },
+    {
+      "stage": "compile",
+      "ok": true,
+      "detail": "3 task(s) in 3 wave(s)"
+    },
+    {
+      "stage": "test-command",
+      "ok": true,
+      "detail": "npm test (detected:package-json-npm)"
+    },
+    {
+      "stage": "bootstrap-command",
+      "ok": true,
+      "detail": "npm install --no-package-lock (detected:package-json)"
+    },
+    {
+      "stage": "dirty-baseline",
+      "ok": true,
+      "detail": "dirty baseline recorded: 0 pre-existing line(s)"
+    },
+    {
+      "stage": "base-branch",
+      "ok": true,
+      "detail": "detached HEAD \u2192 fell back to repo default 'main'"
+    }
+  ],
+  "compile": {
+    "tasks": [
+      {
+        "id": "4",
+        "title": "Enrollment and the ack gate",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/core/enrollment.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+            "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+            "`pauseMember(row: MemberRow): MemberRow`",
+            "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+            "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+            "`recordEvidence(row: MemberRow): MemberRow`",
+            "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+            "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+            "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+            "`inPool(row: MemberRow, now: number, openPairingMembers: ReadonlySet<MemberId>): boolean`",
+            "`type EnrollmentConfig = { cadenceMs: number }`",
+            "`DEFAULT_MASK_LITERAL: Mask`"
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "title": "The app: handlers, jobs, and the simulated month",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/app/handlers.ts",
+          "src/app/index.ts",
+          "src/app/jobs.ts",
+          "tests/fixtures/members-20.json",
+          "tests/helpers/fake-discord.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+            "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+            "`DEFAULT_MASK: Mask`",
+            "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+            "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+            "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+            "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`",
+            "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+            "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+            "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+            "`pauseMember(row: MemberRow): MemberRow`",
+            "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+            "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+            "`recordEvidence(row: MemberRow): MemberRow`",
+            "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+            "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+            "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+            "`DEFAULT_MASK_LITERAL: Mask`",
+            "`decidePool(input: PoolInput): PoolDecision`",
+            "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+            "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+            "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+            "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+            "`ics(event: IcsEvent): string`",
+            "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+            "`openStorage(path: string): Storage`",
+            "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`",
+            "`parseConfig(toml: string): ConfigStore`",
+            "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+            "`daysSelect(): SelectMenu`",
+            "`hoursSelect(): SelectMenu`",
+            "`customId(action: string, ref: string): string`",
+            "`parseCustomId(id: string): { action: string; ref: string }`"
+          ],
+          "produces": [
+            "`createApp(deps: AppDeps): App`",
+            "`type AppDeps = { storage: Storage; config: ConfigStore; discord: DiscordPort; ids?: () => string }`",
+            "`class FakeDiscord implements DiscordPort`"
+          ]
+        }
+      },
+      {
+        "id": "14",
+        "title": "The discord.js client and the entry point",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/adapters/discord/client.ts",
+          "src/main.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "`createApp(deps: AppDeps): App`",
+            "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+            "`zoneSuggestions(query: string, limit?: number): string[]`",
+            "`permissionsBitfield(): bigint`",
+            "`inviteUrl(clientId: string): string`",
+            "`loadConfig(path: string): ConfigStore`",
+            "`openStorage(path: string): Storage`"
+          ],
+          "produces": [
+            "`toIncoming(i: InteractionLike): Incoming | null`",
+            "`toThreadMessage(m: MessageLike): Incoming | null`",
+            "`createDiscordPort(client: ClientLike): DiscordPort`",
+            "`autocompleteZones(i: AutocompleteLike): Promise<void>`",
+            "`startBot(opts: { token: string; configPath: string; dbPath: string; tickMs: number }): Promise<void>`"
+          ]
+        }
+      }
+    ],
+    "dag_edges": [
+      {
+        "from": "4",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "13",
+        "to": "14",
+        "why": "interface"
+      }
+    ],
+    "marker_conflicts": [],
+    "waves": [
+      [
+        "4"
+      ],
+      [
+        "13"
+      ],
+      [
+        "14"
+      ]
+    ],
+    "launch_waves": [
+      [
+        {
+          "id": "4",
+          "title": "Enrollment and the ack gate",
+          "files": [
+            "src/core/enrollment.ts",
+            "tests/enrollment.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+              "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+              "`pauseMember(row: MemberRow): MemberRow`",
+              "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+              "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+              "`recordEvidence(row: MemberRow): MemberRow`",
+              "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+              "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+              "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+              "`inPool(row: MemberRow, now: number, openPairingMembers: ReadonlySet<MemberId>): boolean`",
+              "`type EnrollmentConfig = { cadenceMs: number }`",
+              "`DEFAULT_MASK_LITERAL: Mask`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/core/enrollment.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/enrollment.test.ts"
+          ],
+          "testCmd": "bun test tests/enrollment.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/enrollment.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/core/enrollment.ts",
+              "tests/enrollment.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/enrollment.test.ts"
+            ],
+            "proofTests": [
+              "tests/enrollment.test.ts"
+            ],
+            "landing": {
+              "tests/enrollment.test.ts": "tests/enrollment.test.ts"
+            },
+            "driverOwned": [
+              "tests/enrollment.test.ts"
+            ],
+            "siblingOwned": [],
+            "produces": [
+              "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+              "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+              "`pauseMember(row: MemberRow): MemberRow`",
+              "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+              "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+              "`recordEvidence(row: MemberRow): MemberRow`",
+              "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+              "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+              "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+              "`inPool(row: MemberRow, now: number, openPairingMembers: ReadonlySet<MemberId>): boolean`",
+              "`type EnrollmentConfig = { cadenceMs: number }`",
+              "`DEFAULT_MASK_LITERAL: Mask`"
+            ],
+            "consumes": []
+          }
+        }
+      ],
+      [
+        {
+          "id": "13",
+          "title": "The app: handlers, jobs, and the simulated month",
+          "files": [
+            "src/app/handlers.ts",
+            "src/app/index.ts",
+            "src/app/jobs.ts",
+            "tests/app.test.ts",
+            "tests/e2e-month.test.ts",
+            "tests/fixtures/members-20.json",
+            "tests/helpers/fake-discord.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+              "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+              "`DEFAULT_MASK: Mask`",
+              "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+              "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+              "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+              "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`",
+              "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+              "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+              "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+              "`pauseMember(row: MemberRow): MemberRow`",
+              "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+              "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+              "`recordEvidence(row: MemberRow): MemberRow`",
+              "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+              "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+              "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+              "`DEFAULT_MASK_LITERAL: Mask`",
+              "`decidePool(input: PoolInput): PoolDecision`",
+              "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+              "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+              "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+              "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+              "`ics(event: IcsEvent): string`",
+              "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+              "`openStorage(path: string): Storage`",
+              "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`",
+              "`parseConfig(toml: string): ConfigStore`",
+              "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+              "`daysSelect(): SelectMenu`",
+              "`hoursSelect(): SelectMenu`",
+              "`customId(action: string, ref: string): string`",
+              "`parseCustomId(id: string): { action: string; ref: string }`"
+            ],
+            "produces": [
+              "`createApp(deps: AppDeps): App`",
+              "`type AppDeps = { storage: Storage; config: ConfigStore; discord: DiscordPort; ids?: () => string }`",
+              "`class FakeDiscord implements DiscordPort`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/app/handlers.ts",
+            "src/app/index.ts",
+            "src/app/jobs.ts",
+            "tests/fixtures/members-20.json",
+            "tests/helpers/fake-discord.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/app.test.ts",
+            "tests/e2e-month.test.ts"
+          ],
+          "testCmd": "bun test tests/app.test.ts tests/e2e-month.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/app.test.ts",
+            "tests/e2e-month.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/app/handlers.ts",
+              "src/app/index.ts",
+              "src/app/jobs.ts",
+              "tests/app.test.ts",
+              "tests/e2e-month.test.ts",
+              "tests/fixtures/members-20.json",
+              "tests/helpers/fake-discord.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/app.test.ts",
+              "tests/e2e-month.test.ts"
+            ],
+            "proofTests": [
+              "tests/app.test.ts",
+              "tests/e2e-month.test.ts"
+            ],
+            "landing": {
+              "tests/app.test.ts": "tests/app.test.ts",
+              "tests/e2e-month.test.ts": "tests/e2e-month.test.ts"
+            },
+            "driverOwned": [
+              "tests/app.test.ts",
+              "tests/e2e-month.test.ts"
+            ],
+            "siblingOwned": [],
+            "produces": [
+              "`createApp(deps: AppDeps): App`",
+              "`type AppDeps = { storage: Storage; config: ConfigStore; discord: DiscordPort; ids?: () => string }`",
+              "`class FakeDiscord implements DiscordPort`"
+            ],
+            "consumes": [
+              "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+              "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+              "`DEFAULT_MASK: Mask`",
+              "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+              "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+              "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+              "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`",
+              "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+              "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+              "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+              "`pauseMember(row: MemberRow): MemberRow`",
+              "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+              "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+              "`recordEvidence(row: MemberRow): MemberRow`",
+              "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+              "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+              "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+              "`DEFAULT_MASK_LITERAL: Mask`",
+              "`decidePool(input: PoolInput): PoolDecision`",
+              "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+              "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+              "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+              "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+              "`ics(event: IcsEvent): string`",
+              "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+              "`openStorage(path: string): Storage`",
+              "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`",
+              "`parseConfig(toml: string): ConfigStore`",
+              "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+              "`daysSelect(): SelectMenu`",
+              "`hoursSelect(): SelectMenu`",
+              "`customId(action: string, ref: string): string`",
+              "`parseCustomId(id: string): { action: string; ref: string }`"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "id": "14",
+          "title": "The discord.js client and the entry point",
+          "files": [
+            "src/adapters/discord/client.ts",
+            "src/main.ts",
+            "tests/discord-client.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "`createApp(deps: AppDeps): App`",
+              "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+              "`zoneSuggestions(query: string, limit?: number): string[]`",
+              "`permissionsBitfield(): bigint`",
+              "`inviteUrl(clientId: string): string`",
+              "`loadConfig(path: string): ConfigStore`",
+              "`openStorage(path: string): Storage`"
+            ],
+            "produces": [
+              "`toIncoming(i: InteractionLike): Incoming | null`",
+              "`toThreadMessage(m: MessageLike): Incoming | null`",
+              "`createDiscordPort(client: ClientLike): DiscordPort`",
+              "`autocompleteZones(i: AutocompleteLike): Promise<void>`",
+              "`startBot(opts: { token: string; configPath: string; dbPath: string; tickMs: number }): Promise<void>`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/adapters/discord/client.ts",
+            "src/main.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/discord-client.test.ts"
+          ],
+          "testCmd": "bun test tests/discord-client.test.ts",
+          "proofRuns": [
+            "DISCORD_TOKEN= bun run src/main.ts --check-config config.example.toml > /tmp/check.txt && grep -q 'permissions=360778304528' /tmp/check.txt && grep -q 'guilds: 1' /tmp/check.txt",
+            "DISCORD_TOKEN= bun run src/main.ts --check-config /nonexistent.toml > /tmp/check2.txt 2>&1; test $? -eq 1 && grep -q 'nonexistent.toml' /tmp/check2.txt"
+          ],
+          "proofGuards": [
+            "tests/discord-client.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/adapters/discord/client.ts",
+              "src/main.ts",
+              "tests/discord-client.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/discord-client.test.ts"
+            ],
+            "proofTests": [
+              "tests/discord-client.test.ts"
+            ],
+            "landing": {
+              "tests/discord-client.test.ts": "tests/discord-client.test.ts"
+            },
+            "driverOwned": [
+              "tests/discord-client.test.ts"
+            ],
+            "siblingOwned": [],
+            "produces": [
+              "`toIncoming(i: InteractionLike): Incoming | null`",
+              "`toThreadMessage(m: MessageLike): Incoming | null`",
+              "`createDiscordPort(client: ClientLike): DiscordPort`",
+              "`autocompleteZones(i: AutocompleteLike): Promise<void>`",
+              "`startBot(opts: { token: string; configPath: string; dbPath: string; tickMs: number }): Promise<void>`"
+            ],
+            "consumes": [
+              "`createApp(deps: AppDeps): App`",
+              "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+              "`zoneSuggestions(query: string, limit?: number): string[]`",
+              "`permissionsBitfield(): bigint`",
+              "`inviteUrl(clientId: string): string`",
+              "`loadConfig(path: string): ConfigStore`",
+              "`openStorage(path: string): Storage`"
+            ]
+          }
+        }
+      ]
+    ],
+    "waveLabels": [
+      "Enrollment and the ack gate",
+      "The app: handlers, jobs, and the simulated month",
+      "The discord.js client and the entry point"
+    ],
+    "mode": "parallel",
+    "degrade_reason": null,
+    "globalConstraints": "- Every shared shape is imported from `src/types.ts`; no module redeclares `Strategy`, `Context`, `MemberRow`, `PairingRecord`, `Job`, `Storage`, `GuildConfig`, `DiscordPort`, `Incoming` or `App`.\n- No test sleeps and no test reads the wall clock: every time-based behaviour takes an injected `now` (epoch milliseconds) and tests drive it.\n- Tests never share on-disk state: a test needing a database opens `:memory:`; a test writing files uses its own `mkdtemp` directory.\n- Only `src/adapters/discord/` and `src/main.ts` import `discord.js`. `src/core/`, `src/jobs/`, `src/storage/` and `src/config/` import nothing platform-specific.\n- Every table has a `guild_id` column and every query is scoped by it.\n- No user-facing string in `src/` or `config.example.toml` contains an em dash (U+2014), the word \"experiment\", or any mention of KmikeyM, shares or votes. Copy uses commas, periods, colons or parentheses instead.\n- A `Mask` is exactly 168 characters of `0` or `1`, index 0 being Monday 00:00 local; any function given another length throws an `Error` whose message contains `168`.\n\n**Acceptance:** suite, plus per-task review. Task 13's simulated month is the integration-spanning exam: per-task green never establishes the seams. The live install on the KmikeyM Discord is Task 15, a manual step outside the fleet run.",
+    "constraintChecks": [
+      {
+        "cmd": "bunx tsc --noEmit && bun test",
+        "minor": false
+      },
+      {
+        "cmd": "test -z \"$(grep -rl 'discord.js' src --include=*.ts | grep -v -e '^src/adapters/discord/' -e '^src/main.ts')\"",
+        "minor": false
+      },
+      {
+        "cmd": "test -z \"$(grep -rn -e '\u2014' src config.example.toml README.md Dockerfile docker-compose.yml 2>/dev/null)\"",
+        "minor": false
+      },
+      {
+        "cmd": "test -z \"$(grep -rniE 'kmikeym|shareholder|experiment' src config.example.toml 2>/dev/null)\"",
+        "minor": false
+      }
+    ],
+    "launch_file": "/home/exedev/target/.claude/ultrapowers/run-run-3/launch.json",
+    "args_file": "/home/exedev/target/.claude/ultrapowers/run-run-3/args.json"
+  },
+  "baseBranch": "main",
+  "launchFile": "/home/exedev/target/.claude/ultrapowers/run-run-3/launch.json",
+  "argsFile": "/home/exedev/target/.claude/ultrapowers/run-run-3/args.json",
+  "workflowName": "ultrapowers-run",
+  "llmDerives": [
+    "waves[][].tier on the args-file wave entries (slots pre-emitted as null; the engine reads knobs ONLY from these inline entries \u2014 never a top-level launch key)",
+    "nothing for waves[][].testCmd \u2014 the per-task command is compiler-derived from the task's Proof `Test:` paths and pre-filled on the wave entries (run-wide testCmd is driver-derived \u2014 knob or detection \u2014 and already stamped in the args file and receipt)",
+    "nothing for bootstrapCmd \u2014 driver-derived from the target's lockfile/manifest (or the --bootstrap-cmd knob) and stamped in the args file and receipt, so validation, the engine and the gate share one value",
+    "nothing for review depth \u2014 it is plan-authored (**Review:** marker), pre-filled on the args wave entries"
+  ],
+  "testCmd": "npm test",
+  "testCmdSource": "detected:package-json-npm",
+  "bootstrapCmd": "npm install --no-package-lock",
+  "bootstrapCmdSource": "detected:package-json"
+}
