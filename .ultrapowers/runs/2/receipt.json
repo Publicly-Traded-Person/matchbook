@@ -1,0 +1,1953 @@
+{
+  "ok": true,
+  "stamp": "run-2",
+  "stages": [
+    {
+      "stage": "fleet-run",
+      "ok": true,
+      "detail": "fleet run run-2"
+    },
+    {
+      "stage": "git-repo",
+      "ok": true,
+      "detail": "/home/exedev/target"
+    },
+    {
+      "stage": "worktree-probe",
+      "ok": true,
+      "detail": "worktree capability verified (probe cut and removed)"
+    },
+    {
+      "stage": "compile",
+      "ok": true,
+      "detail": "14 task(s) in 3 wave(s)"
+    },
+    {
+      "stage": "test-command",
+      "ok": true,
+      "detail": "npm test (detected:package-json-npm)"
+    },
+    {
+      "stage": "bootstrap-command",
+      "ok": true,
+      "detail": "npm install --no-package-lock (detected:package-json)"
+    },
+    {
+      "stage": "dirty-baseline",
+      "ok": true,
+      "detail": "dirty baseline recorded: 0 pre-existing line(s)"
+    },
+    {
+      "stage": "base-branch",
+      "ok": true,
+      "detail": "detached HEAD \u2192 fell back to repo default 'main'"
+    }
+  ],
+  "compile": {
+    "tasks": [
+      {
+        "id": "1",
+        "title": "Weekly availability masks",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/core/availability.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+            "`DEFAULT_PRESET: AvailabilityPreset`",
+            "`DEFAULT_MASK: Mask`",
+            "`EMPTY_MASK: Mask`",
+            "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+            "`isAvailableAt(mask: Mask, zone: string, utcMs: number): boolean`",
+            "`projectToUtc(mask: Mask, zone: string, fromUtc: number, hours: number): number[]`",
+            "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+            "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+            "`assertMask(mask: string): asserts mask is Mask`"
+          ]
+        }
+      },
+      {
+        "id": "2",
+        "title": "The strategy interface, round-robin, and composition",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/core/strategies.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`buildContext<R extends Signal>(all: AllSignals, reads: readonly R[], now: number): Context<R>`",
+            "`roundRobin: Strategy<'pairing-history'>`",
+            "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+            "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "The matcher",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/core/matching.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+            "`bruteForceOptimal(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): number`",
+            "`type MatchOptions = { now: number; feasible(a: Participant, b: Participant): boolean; signals?: Partial<AllSignals> }`",
+            "`type ProposedPair = { a: MemberId; b: MemberId; score: number; fresh: boolean }`"
+          ]
+        }
+      },
+      {
+        "id": "4",
+        "title": "Enrollment and the ack gate",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/core/enrollment.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+            "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+            "`pauseMember(row: MemberRow): MemberRow`",
+            "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+            "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+            "`recordEvidence(row: MemberRow): MemberRow`",
+            "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+            "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+            "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+            "`inPool(row: MemberRow, now: number, openPairingMembers: ReadonlySet<MemberId>): boolean`",
+            "`type EnrollmentConfig = { cadenceMs: number }`",
+            "`DEFAULT_MASK_LITERAL: Mask`"
+          ]
+        }
+      },
+      {
+        "id": "5",
+        "title": "The pool decision: holding, pull-forward, novelty",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/core/pool.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`decidePool(input: PoolInput): PoolDecision`",
+            "`type PoolInput = { members: readonly MemberRow[]; history: readonly PairingRecord[]; openPairingMembers: ReadonlySet<MemberId>; now: number; cfg: PoolConfig; feasible(a: MemberRow, b: MemberRow): boolean; pick(pool: readonly MemberRow[]): readonly { a: MemberId; b: MemberId }[] }`",
+            "`type PoolConfig = { cadenceMs: number; holdingWindowMs: number; pullForwardMaxMs: number }`",
+            "`type PoolDecision = { pairings: readonly { members: readonly [MemberId, MemberId]; novelty: Novelty }[]; pullForward: readonly MemberId[]; updates: readonly MemberRow[]; notices: readonly PoolNotice[] }`",
+            "`type PoolNotice = { memberId: MemberId; kind: 'holding-for-stranger' | 'met-everyone' | 'no-overlap'; partnerId?: MemberId; lastPairedAt?: number }`"
+          ]
+        }
+      },
+      {
+        "id": "6",
+        "title": "The scheduling state machine",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/core/scheduling.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+            "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+            "`dueTimes(lockedStartUtc: number, cfg: SchedulingConfig): { roomOpen: number; roomClose: number; followUp: number }`",
+            "`class IllegalTransition extends Error`",
+            "`type SchedulingState = { state: PairingState; members: readonly [MemberId, MemberId]; proposedStartUtc: number | null; proposedBy: MemberId | null; countersUsed: Readonly<Record<MemberId, number>>; confirmedBy: readonly MemberId[]; lockedStartUtc: number | null }`",
+            "`type SchedulingEvent = { kind: 'propose'; startUtc: number } | { kind: 'confirm'; by: MemberId } | { kind: 'counter'; by: MemberId; startUtc: number } | { kind: 'negotiation-timeout' } | { kind: 'overlap-lost' } | { kind: 'tz-repropose'; startUtc: number | null } | { kind: 'follow-up-due' } | { kind: 'release-review'; hadActivity: boolean } | { kind: 'archive' }`",
+            "`type SchedulingConfig = { negotiationTimeoutMs: number; callMs: number }`",
+            "`type Effect = { type: 'schedule'; kind: JobKind; runAt: number } | { type: 'cancel'; kind: JobKind } | { type: 'say'; copy: CopyKey; vars?: Readonly<Record<string, string | number>> } | { type: 'archive' }`"
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "title": "Slot proposal and the calendar file",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/core/calendar.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+            "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+            "`ics(event: IcsEvent): string`",
+            "`formatIcsTime(ms: number): string`",
+            "`type SlotOptions = { minDays: number; maxDays: number; zoneA: string; zoneB: string }`",
+            "`type IcsEvent = { uid: string; dtstamp: number; startUtc: number; durationMin: number; summary: string; description: string; threadUrl: string }`"
+          ]
+        }
+      },
+      {
+        "id": "8",
+        "title": "Durable jobs",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/jobs/memory-store.ts",
+          "src/jobs/scheduler.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+            "`class MemoryJobStore implements JobStore`"
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "title": "SQLite storage",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/storage/sqlite.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`openStorage(path: string): Storage`",
+            "`SCHEMA_SQL: readonly string[]`"
+          ]
+        }
+      },
+      {
+        "id": "10",
+        "title": "Config file and copy templates",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "config.example.toml",
+          "src/config/copy.ts",
+          "src/config/file-store.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`loadConfig(path: string): ConfigStore`",
+            "`parseConfig(toml: string): ConfigStore`",
+            "`DEFAULT_COPY: Readonly<Record<CopyKey, string>>`",
+            "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`"
+          ]
+        }
+      },
+      {
+        "id": "11",
+        "title": "Slash command definitions, zone autocomplete, availability menus",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/adapters/discord/commands.ts",
+          "src/adapters/discord/components.ts",
+          "src/adapters/discord/zones.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+            "`zoneSuggestions(query: string, limit?: number): string[]`",
+            "`ZONE_ALIASES: Readonly<Record<string, string>>`",
+            "`PERMISSIONS: readonly string[]`",
+            "`permissionsBitfield(): bigint`",
+            "`inviteUrl(clientId: string): string`",
+            "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+            "`daysSelect(): SelectMenu`",
+            "`hoursSelect(): SelectMenu`",
+            "`customId(action: string, ref: string): string`",
+            "`parseCustomId(id: string): { action: string; ref: string }`"
+          ]
+        }
+      },
+      {
+        "id": "12",
+        "title": "Docker Compose, Dockerfile, README quickstart",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          ".dockerignore",
+          "Dockerfile",
+          "README.md",
+          "docker-compose.yml"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "none"
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "title": "The app: handlers, jobs, and the simulated month",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/app/handlers.ts",
+          "src/app/index.ts",
+          "src/app/jobs.ts",
+          "tests/fixtures/members-20.json",
+          "tests/helpers/fake-discord.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+            "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+            "`DEFAULT_MASK: Mask`",
+            "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+            "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+            "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+            "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`",
+            "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+            "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+            "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+            "`pauseMember(row: MemberRow): MemberRow`",
+            "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+            "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+            "`recordEvidence(row: MemberRow): MemberRow`",
+            "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+            "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+            "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+            "`DEFAULT_MASK_LITERAL: Mask`",
+            "`decidePool(input: PoolInput): PoolDecision`",
+            "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+            "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+            "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+            "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+            "`ics(event: IcsEvent): string`",
+            "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+            "`openStorage(path: string): Storage`",
+            "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`",
+            "`parseConfig(toml: string): ConfigStore`",
+            "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+            "`daysSelect(): SelectMenu`",
+            "`hoursSelect(): SelectMenu`",
+            "`customId(action: string, ref: string): string`",
+            "`parseCustomId(id: string): { action: string; ref: string }`"
+          ],
+          "produces": [
+            "`createApp(deps: AppDeps): App`",
+            "`type AppDeps = { storage: Storage; config: ConfigStore; discord: DiscordPort; ids?: () => string }`",
+            "`class FakeDiscord implements DiscordPort`"
+          ]
+        }
+      },
+      {
+        "id": "14",
+        "title": "The discord.js client and the entry point",
+        "disposition": "implementation",
+        "heuristic": false,
+        "writes": [
+          "src/adapters/discord/client.ts",
+          "src/main.ts"
+        ],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "`createApp(deps: AppDeps): App`",
+            "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+            "`zoneSuggestions(query: string, limit?: number): string[]`",
+            "`permissionsBitfield(): bigint`",
+            "`inviteUrl(clientId: string): string`",
+            "`loadConfig(path: string): ConfigStore`",
+            "`openStorage(path: string): Storage`"
+          ],
+          "produces": [
+            "`toIncoming(i: InteractionLike): Incoming | null`",
+            "`toThreadMessage(m: MessageLike): Incoming | null`",
+            "`createDiscordPort(client: ClientLike): DiscordPort`",
+            "`autocompleteZones(i: AutocompleteLike): Promise<void>`",
+            "`startBot(opts: { token: string; configPath: string; dbPath: string; tickMs: number }): Promise<void>`"
+          ]
+        }
+      },
+      {
+        "id": "15",
+        "title": "Install on the KmikeyM Discord and complete one call",
+        "disposition": "manual",
+        "heuristic": false,
+        "writes": [],
+        "depends_on": [],
+        "interfaces": {
+          "consumes": [
+            "none"
+          ],
+          "produces": [
+            "none"
+          ]
+        }
+      }
+    ],
+    "dag_edges": [
+      {
+        "from": "1",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "2",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "3",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "4",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "5",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "6",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "7",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "8",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "9",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "10",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "11",
+        "to": "13",
+        "why": "interface"
+      },
+      {
+        "from": "9",
+        "to": "14",
+        "why": "interface"
+      },
+      {
+        "from": "10",
+        "to": "14",
+        "why": "interface"
+      },
+      {
+        "from": "11",
+        "to": "14",
+        "why": "interface"
+      },
+      {
+        "from": "13",
+        "to": "14",
+        "why": "interface"
+      }
+    ],
+    "marker_conflicts": [],
+    "waves": [
+      [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      [
+        "13"
+      ],
+      [
+        "14"
+      ]
+    ],
+    "launch_waves": [
+      [
+        {
+          "id": "1",
+          "title": "Weekly availability masks",
+          "files": [
+            "src/core/availability.ts",
+            "tests/availability.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+              "`DEFAULT_PRESET: AvailabilityPreset`",
+              "`DEFAULT_MASK: Mask`",
+              "`EMPTY_MASK: Mask`",
+              "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+              "`isAvailableAt(mask: Mask, zone: string, utcMs: number): boolean`",
+              "`projectToUtc(mask: Mask, zone: string, fromUtc: number, hours: number): number[]`",
+              "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+              "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+              "`assertMask(mask: string): asserts mask is Mask`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/core/availability.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/availability.test.ts"
+          ],
+          "testCmd": "bun test tests/availability.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/availability.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/core/availability.ts",
+              "tests/availability.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/availability.test.ts"
+            ],
+            "proofTests": [
+              "tests/availability.test.ts"
+            ],
+            "landing": {
+              "tests/availability.test.ts": "tests/availability.test.ts"
+            },
+            "driverOwned": [
+              "tests/availability.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+              "`DEFAULT_PRESET: AvailabilityPreset`",
+              "`DEFAULT_MASK: Mask`",
+              "`EMPTY_MASK: Mask`",
+              "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+              "`isAvailableAt(mask: Mask, zone: string, utcMs: number): boolean`",
+              "`projectToUtc(mask: Mask, zone: string, fromUtc: number, hours: number): number[]`",
+              "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+              "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+              "`assertMask(mask: string): asserts mask is Mask`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "2",
+          "title": "The strategy interface, round-robin, and composition",
+          "files": [
+            "src/core/strategies.ts",
+            "tests/strategies.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`buildContext<R extends Signal>(all: AllSignals, reads: readonly R[], now: number): Context<R>`",
+              "`roundRobin: Strategy<'pairing-history'>`",
+              "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+              "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/core/strategies.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/strategies.test.ts"
+          ],
+          "testCmd": "bun test tests/strategies.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/strategies.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/core/strategies.ts",
+              "tests/strategies.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/strategies.test.ts"
+            ],
+            "proofTests": [
+              "tests/strategies.test.ts"
+            ],
+            "landing": {
+              "tests/strategies.test.ts": "tests/strategies.test.ts"
+            },
+            "driverOwned": [
+              "tests/strategies.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts"
+            ],
+            "produces": [
+              "`buildContext<R extends Signal>(all: AllSignals, reads: readonly R[], now: number): Context<R>`",
+              "`roundRobin: Strategy<'pairing-history'>`",
+              "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+              "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "3",
+          "title": "The matcher",
+          "files": [
+            "src/core/matching.ts",
+            "tests/matching.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+              "`bruteForceOptimal(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): number`",
+              "`type MatchOptions = { now: number; feasible(a: Participant, b: Participant): boolean; signals?: Partial<AllSignals> }`",
+              "`type ProposedPair = { a: MemberId; b: MemberId; score: number; fresh: boolean }`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/core/matching.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/matching.test.ts"
+          ],
+          "testCmd": "bun test tests/matching.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/matching.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/core/matching.ts",
+              "tests/matching.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/matching.test.ts"
+            ],
+            "proofTests": [
+              "tests/matching.test.ts"
+            ],
+            "landing": {
+              "tests/matching.test.ts": "tests/matching.test.ts"
+            },
+            "driverOwned": [
+              "tests/matching.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+              "`bruteForceOptimal(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): number`",
+              "`type MatchOptions = { now: number; feasible(a: Participant, b: Participant): boolean; signals?: Partial<AllSignals> }`",
+              "`type ProposedPair = { a: MemberId; b: MemberId; score: number; fresh: boolean }`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "4",
+          "title": "Enrollment and the ack gate",
+          "files": [
+            "src/core/enrollment.ts",
+            "tests/enrollment.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+              "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+              "`pauseMember(row: MemberRow): MemberRow`",
+              "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+              "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+              "`recordEvidence(row: MemberRow): MemberRow`",
+              "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+              "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+              "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+              "`inPool(row: MemberRow, now: number, openPairingMembers: ReadonlySet<MemberId>): boolean`",
+              "`type EnrollmentConfig = { cadenceMs: number }`",
+              "`DEFAULT_MASK_LITERAL: Mask`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/core/enrollment.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/enrollment.test.ts"
+          ],
+          "testCmd": "bun test tests/enrollment.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/enrollment.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/core/enrollment.ts",
+              "tests/enrollment.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/enrollment.test.ts"
+            ],
+            "proofTests": [
+              "tests/enrollment.test.ts"
+            ],
+            "landing": {
+              "tests/enrollment.test.ts": "tests/enrollment.test.ts"
+            },
+            "driverOwned": [
+              "tests/enrollment.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+              "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+              "`pauseMember(row: MemberRow): MemberRow`",
+              "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+              "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+              "`recordEvidence(row: MemberRow): MemberRow`",
+              "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+              "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+              "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+              "`inPool(row: MemberRow, now: number, openPairingMembers: ReadonlySet<MemberId>): boolean`",
+              "`type EnrollmentConfig = { cadenceMs: number }`",
+              "`DEFAULT_MASK_LITERAL: Mask`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "5",
+          "title": "The pool decision: holding, pull-forward, novelty",
+          "files": [
+            "src/core/pool.ts",
+            "tests/pool.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`decidePool(input: PoolInput): PoolDecision`",
+              "`type PoolInput = { members: readonly MemberRow[]; history: readonly PairingRecord[]; openPairingMembers: ReadonlySet<MemberId>; now: number; cfg: PoolConfig; feasible(a: MemberRow, b: MemberRow): boolean; pick(pool: readonly MemberRow[]): readonly { a: MemberId; b: MemberId }[] }`",
+              "`type PoolConfig = { cadenceMs: number; holdingWindowMs: number; pullForwardMaxMs: number }`",
+              "`type PoolDecision = { pairings: readonly { members: readonly [MemberId, MemberId]; novelty: Novelty }[]; pullForward: readonly MemberId[]; updates: readonly MemberRow[]; notices: readonly PoolNotice[] }`",
+              "`type PoolNotice = { memberId: MemberId; kind: 'holding-for-stranger' | 'met-everyone' | 'no-overlap'; partnerId?: MemberId; lastPairedAt?: number }`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/core/pool.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/pool.test.ts"
+          ],
+          "testCmd": "bun test tests/pool.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/pool.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/core/pool.ts",
+              "tests/pool.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/pool.test.ts"
+            ],
+            "proofTests": [
+              "tests/pool.test.ts"
+            ],
+            "landing": {
+              "tests/pool.test.ts": "tests/pool.test.ts"
+            },
+            "driverOwned": [
+              "tests/pool.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`decidePool(input: PoolInput): PoolDecision`",
+              "`type PoolInput = { members: readonly MemberRow[]; history: readonly PairingRecord[]; openPairingMembers: ReadonlySet<MemberId>; now: number; cfg: PoolConfig; feasible(a: MemberRow, b: MemberRow): boolean; pick(pool: readonly MemberRow[]): readonly { a: MemberId; b: MemberId }[] }`",
+              "`type PoolConfig = { cadenceMs: number; holdingWindowMs: number; pullForwardMaxMs: number }`",
+              "`type PoolDecision = { pairings: readonly { members: readonly [MemberId, MemberId]; novelty: Novelty }[]; pullForward: readonly MemberId[]; updates: readonly MemberRow[]; notices: readonly PoolNotice[] }`",
+              "`type PoolNotice = { memberId: MemberId; kind: 'holding-for-stranger' | 'met-everyone' | 'no-overlap'; partnerId?: MemberId; lastPairedAt?: number }`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "6",
+          "title": "The scheduling state machine",
+          "files": [
+            "src/core/scheduling.ts",
+            "tests/scheduling.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+              "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+              "`dueTimes(lockedStartUtc: number, cfg: SchedulingConfig): { roomOpen: number; roomClose: number; followUp: number }`",
+              "`class IllegalTransition extends Error`",
+              "`type SchedulingState = { state: PairingState; members: readonly [MemberId, MemberId]; proposedStartUtc: number | null; proposedBy: MemberId | null; countersUsed: Readonly<Record<MemberId, number>>; confirmedBy: readonly MemberId[]; lockedStartUtc: number | null }`",
+              "`type SchedulingEvent = { kind: 'propose'; startUtc: number } | { kind: 'confirm'; by: MemberId } | { kind: 'counter'; by: MemberId; startUtc: number } | { kind: 'negotiation-timeout' } | { kind: 'overlap-lost' } | { kind: 'tz-repropose'; startUtc: number | null } | { kind: 'follow-up-due' } | { kind: 'release-review'; hadActivity: boolean } | { kind: 'archive' }`",
+              "`type SchedulingConfig = { negotiationTimeoutMs: number; callMs: number }`",
+              "`type Effect = { type: 'schedule'; kind: JobKind; runAt: number } | { type: 'cancel'; kind: JobKind } | { type: 'say'; copy: CopyKey; vars?: Readonly<Record<string, string | number>> } | { type: 'archive' }`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/core/scheduling.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/scheduling.test.ts"
+          ],
+          "testCmd": "bun test tests/scheduling.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/scheduling.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/core/scheduling.ts",
+              "tests/scheduling.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/scheduling.test.ts"
+            ],
+            "proofTests": [
+              "tests/scheduling.test.ts"
+            ],
+            "landing": {
+              "tests/scheduling.test.ts": "tests/scheduling.test.ts"
+            },
+            "driverOwned": [
+              "tests/scheduling.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+              "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+              "`dueTimes(lockedStartUtc: number, cfg: SchedulingConfig): { roomOpen: number; roomClose: number; followUp: number }`",
+              "`class IllegalTransition extends Error`",
+              "`type SchedulingState = { state: PairingState; members: readonly [MemberId, MemberId]; proposedStartUtc: number | null; proposedBy: MemberId | null; countersUsed: Readonly<Record<MemberId, number>>; confirmedBy: readonly MemberId[]; lockedStartUtc: number | null }`",
+              "`type SchedulingEvent = { kind: 'propose'; startUtc: number } | { kind: 'confirm'; by: MemberId } | { kind: 'counter'; by: MemberId; startUtc: number } | { kind: 'negotiation-timeout' } | { kind: 'overlap-lost' } | { kind: 'tz-repropose'; startUtc: number | null } | { kind: 'follow-up-due' } | { kind: 'release-review'; hadActivity: boolean } | { kind: 'archive' }`",
+              "`type SchedulingConfig = { negotiationTimeoutMs: number; callMs: number }`",
+              "`type Effect = { type: 'schedule'; kind: JobKind; runAt: number } | { type: 'cancel'; kind: JobKind } | { type: 'say'; copy: CopyKey; vars?: Readonly<Record<string, string | number>> } | { type: 'archive' }`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "7",
+          "title": "Slot proposal and the calendar file",
+          "files": [
+            "src/core/calendar.ts",
+            "tests/calendar.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+              "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+              "`ics(event: IcsEvent): string`",
+              "`formatIcsTime(ms: number): string`",
+              "`type SlotOptions = { minDays: number; maxDays: number; zoneA: string; zoneB: string }`",
+              "`type IcsEvent = { uid: string; dtstamp: number; startUtc: number; durationMin: number; summary: string; description: string; threadUrl: string }`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/core/calendar.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/calendar.test.ts"
+          ],
+          "testCmd": "bun test tests/calendar.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/calendar.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/core/calendar.ts",
+              "tests/calendar.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/calendar.test.ts"
+            ],
+            "proofTests": [
+              "tests/calendar.test.ts"
+            ],
+            "landing": {
+              "tests/calendar.test.ts": "tests/calendar.test.ts"
+            },
+            "driverOwned": [
+              "tests/calendar.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+              "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+              "`ics(event: IcsEvent): string`",
+              "`formatIcsTime(ms: number): string`",
+              "`type SlotOptions = { minDays: number; maxDays: number; zoneA: string; zoneB: string }`",
+              "`type IcsEvent = { uid: string; dtstamp: number; startUtc: number; durationMin: number; summary: string; description: string; threadUrl: string }`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "8",
+          "title": "Durable jobs",
+          "files": [
+            "src/jobs/memory-store.ts",
+            "src/jobs/scheduler.ts",
+            "tests/jobs.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+              "`class MemoryJobStore implements JobStore`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/jobs/memory-store.ts",
+            "src/jobs/scheduler.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/jobs.test.ts"
+          ],
+          "testCmd": "bun test tests/jobs.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/jobs.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "tests/jobs.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/jobs.test.ts"
+            ],
+            "proofTests": [
+              "tests/jobs.test.ts"
+            ],
+            "landing": {
+              "tests/jobs.test.ts": "tests/jobs.test.ts"
+            },
+            "driverOwned": [
+              "tests/jobs.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+              "`class MemoryJobStore implements JobStore`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "9",
+          "title": "SQLite storage",
+          "files": [
+            "src/storage/sqlite.ts",
+            "tests/storage.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`openStorage(path: string): Storage`",
+              "`SCHEMA_SQL: readonly string[]`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/storage/sqlite.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/storage.test.ts"
+          ],
+          "testCmd": "bun test tests/storage.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/storage.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/storage/sqlite.ts",
+              "tests/storage.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/storage.test.ts"
+            ],
+            "proofTests": [
+              "tests/storage.test.ts"
+            ],
+            "landing": {
+              "tests/storage.test.ts": "tests/storage.test.ts"
+            },
+            "driverOwned": [
+              "tests/storage.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`openStorage(path: string): Storage`",
+              "`SCHEMA_SQL: readonly string[]`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "10",
+          "title": "Config file and copy templates",
+          "files": [
+            "config.example.toml",
+            "src/config/copy.ts",
+            "src/config/file-store.ts",
+            "tests/config.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`loadConfig(path: string): ConfigStore`",
+              "`parseConfig(toml: string): ConfigStore`",
+              "`DEFAULT_COPY: Readonly<Record<CopyKey, string>>`",
+              "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "config.example.toml",
+            "src/config/copy.ts",
+            "src/config/file-store.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/config.test.ts"
+          ],
+          "testCmd": "bun test tests/config.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/config.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "config.example.toml",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "tests/config.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/config.test.ts"
+            ],
+            "proofTests": [
+              "tests/config.test.ts"
+            ],
+            "landing": {
+              "tests/config.test.ts": "tests/config.test.ts"
+            },
+            "driverOwned": [
+              "tests/config.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "docker-compose.yml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`loadConfig(path: string): ConfigStore`",
+              "`parseConfig(toml: string): ConfigStore`",
+              "`DEFAULT_COPY: Readonly<Record<CopyKey, string>>`",
+              "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "11",
+          "title": "Slash command definitions, zone autocomplete, availability menus",
+          "files": [
+            "src/adapters/discord/commands.ts",
+            "src/adapters/discord/components.ts",
+            "src/adapters/discord/zones.ts",
+            "tests/discord-commands.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+              "`zoneSuggestions(query: string, limit?: number): string[]`",
+              "`ZONE_ALIASES: Readonly<Record<string, string>>`",
+              "`PERMISSIONS: readonly string[]`",
+              "`permissionsBitfield(): bigint`",
+              "`inviteUrl(clientId: string): string`",
+              "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+              "`daysSelect(): SelectMenu`",
+              "`hoursSelect(): SelectMenu`",
+              "`customId(action: string, ref: string): string`",
+              "`parseCustomId(id: string): { action: string; ref: string }`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/adapters/discord/commands.ts",
+            "src/adapters/discord/components.ts",
+            "src/adapters/discord/zones.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/discord-commands.test.ts"
+          ],
+          "testCmd": "bun test tests/discord-commands.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/discord-commands.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "tests/discord-commands.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/discord-commands.test.ts"
+            ],
+            "proofTests": [
+              "tests/discord-commands.test.ts"
+            ],
+            "landing": {
+              "tests/discord-commands.test.ts": "tests/discord-commands.test.ts"
+            },
+            "driverOwned": [
+              "tests/discord-commands.test.ts"
+            ],
+            "siblingOwned": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "config.example.toml",
+              "docker-compose.yml",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [
+              "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+              "`zoneSuggestions(query: string, limit?: number): string[]`",
+              "`ZONE_ALIASES: Readonly<Record<string, string>>`",
+              "`PERMISSIONS: readonly string[]`",
+              "`permissionsBitfield(): bigint`",
+              "`inviteUrl(clientId: string): string`",
+              "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+              "`daysSelect(): SelectMenu`",
+              "`hoursSelect(): SelectMenu`",
+              "`customId(action: string, ref: string): string`",
+              "`parseCustomId(id: string): { action: string; ref: string }`"
+            ],
+            "consumes": []
+          }
+        },
+        {
+          "id": "12",
+          "title": "Docker Compose, Dockerfile, README quickstart",
+          "files": [
+            ".dockerignore",
+            "Dockerfile",
+            "README.md",
+            "docker-compose.yml"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "none"
+            ],
+            "produces": [
+              "none"
+            ]
+          },
+          "tier": null,
+          "review": "lean",
+          "writes": [
+            ".dockerignore",
+            "Dockerfile",
+            "README.md",
+            "docker-compose.yml"
+          ],
+          "commutes": [],
+          "proofTests": [],
+          "testCmd": null,
+          "proofRuns": [
+            "grep -q '^FROM oven/bun' Dockerfile && grep -q 'bun install' Dockerfile && grep -qE '^CMD .*src/main\\.ts' Dockerfile",
+            "test \"$(grep -cE '^  [a-z][a-z0-9_-]*:$' docker-compose.yml)\" = 1 && grep -q '^  matchbook:$' docker-compose.yml && grep -q 'build: \\.' docker-compose.yml && grep -qE '^ *- DISCORD_TOKEN=\\$\\{DISCORD_TOKEN\\}$' docker-compose.yml && grep -q './config.toml:/app/config.toml:ro' docker-compose.yml && grep -q './data:/app/data' docker-compose.yml && grep -q 'restart: unless-stopped' docker-compose.yml",
+            "sed -n '/^## Quickstart/,/^## /p' README.md | tr '\\n' ' ' | grep -q 'git clone https://github.com/Publicly-Traded-Person/matchbook.*cp config.example.toml config.toml.*export DISCORD_TOKEN=\\.\\.\\..*docker compose up'",
+            "sed -n '/^## Permissions/,/^## /p' README.md > /tmp/perm.txt && for p in 'View Channels' 'Send Messages' 'Create Private Threads' 'Send Messages in Threads' 'Manage Threads' 'Manage Channels' 'Connect'; do grep -qE \"^- \\*\\*$p\\*\\*: .\" /tmp/perm.txt || exit 1; done && grep -E '^Not requested:' /tmp/perm.txt | grep -q 'Move Members.*Mute Members.*Manage Events.*Manage Roles'",
+            "sed -n '/^## Writing a scorer/,/^## /p' README.md | tr '\\n' ' ' | grep -q 'interface Strategy.*readonly reads.*score(a: Participant, b: Participant, ctx: Context'",
+            "! grep -q 'There is no code yet' README.md",
+            "grep -q '^node_modules' .dockerignore && grep -q '^config.toml' .dockerignore && grep -q '^data' .dockerignore && grep -q '^.git$' .dockerignore"
+          ],
+          "proofGuards": [],
+          "factsheet": {
+            "files": [
+              ".dockerignore",
+              "Dockerfile",
+              "README.md",
+              "docker-compose.yml"
+            ],
+            "deletes": [],
+            "guards": [],
+            "proofTests": [],
+            "landing": {},
+            "driverOwned": [],
+            "siblingOwned": [
+              "config.example.toml",
+              "src/adapters/discord/commands.ts",
+              "src/adapters/discord/components.ts",
+              "src/adapters/discord/zones.ts",
+              "src/config/copy.ts",
+              "src/config/file-store.ts",
+              "src/core/availability.ts",
+              "src/core/calendar.ts",
+              "src/core/enrollment.ts",
+              "src/core/matching.ts",
+              "src/core/pool.ts",
+              "src/core/scheduling.ts",
+              "src/core/strategies.ts",
+              "src/jobs/memory-store.ts",
+              "src/jobs/scheduler.ts",
+              "src/storage/sqlite.ts",
+              "tests/availability.test.ts",
+              "tests/calendar.test.ts",
+              "tests/config.test.ts",
+              "tests/discord-commands.test.ts",
+              "tests/enrollment.test.ts",
+              "tests/jobs.test.ts",
+              "tests/matching.test.ts",
+              "tests/pool.test.ts",
+              "tests/scheduling.test.ts",
+              "tests/storage.test.ts",
+              "tests/strategies.test.ts"
+            ],
+            "produces": [],
+            "consumes": []
+          }
+        }
+      ],
+      [
+        {
+          "id": "13",
+          "title": "The app: handlers, jobs, and the simulated month",
+          "files": [
+            "src/app/handlers.ts",
+            "src/app/index.ts",
+            "src/app/jobs.ts",
+            "tests/app.test.ts",
+            "tests/e2e-month.test.ts",
+            "tests/fixtures/members-20.json",
+            "tests/helpers/fake-discord.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+              "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+              "`DEFAULT_MASK: Mask`",
+              "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+              "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+              "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+              "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`",
+              "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+              "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+              "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+              "`pauseMember(row: MemberRow): MemberRow`",
+              "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+              "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+              "`recordEvidence(row: MemberRow): MemberRow`",
+              "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+              "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+              "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+              "`DEFAULT_MASK_LITERAL: Mask`",
+              "`decidePool(input: PoolInput): PoolDecision`",
+              "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+              "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+              "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+              "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+              "`ics(event: IcsEvent): string`",
+              "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+              "`openStorage(path: string): Storage`",
+              "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`",
+              "`parseConfig(toml: string): ConfigStore`",
+              "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+              "`daysSelect(): SelectMenu`",
+              "`hoursSelect(): SelectMenu`",
+              "`customId(action: string, ref: string): string`",
+              "`parseCustomId(id: string): { action: string; ref: string }`"
+            ],
+            "produces": [
+              "`createApp(deps: AppDeps): App`",
+              "`type AppDeps = { storage: Storage; config: ConfigStore; discord: DiscordPort; ids?: () => string }`",
+              "`class FakeDiscord implements DiscordPort`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/app/handlers.ts",
+            "src/app/index.ts",
+            "src/app/jobs.ts",
+            "tests/fixtures/members-20.json",
+            "tests/helpers/fake-discord.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/app.test.ts",
+            "tests/e2e-month.test.ts"
+          ],
+          "testCmd": "bun test tests/app.test.ts tests/e2e-month.test.ts",
+          "proofRuns": [],
+          "proofGuards": [
+            "tests/app.test.ts",
+            "tests/e2e-month.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/app/handlers.ts",
+              "src/app/index.ts",
+              "src/app/jobs.ts",
+              "tests/app.test.ts",
+              "tests/e2e-month.test.ts",
+              "tests/fixtures/members-20.json",
+              "tests/helpers/fake-discord.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/app.test.ts",
+              "tests/e2e-month.test.ts"
+            ],
+            "proofTests": [
+              "tests/app.test.ts",
+              "tests/e2e-month.test.ts"
+            ],
+            "landing": {
+              "tests/app.test.ts": "tests/app.test.ts",
+              "tests/e2e-month.test.ts": "tests/e2e-month.test.ts"
+            },
+            "driverOwned": [
+              "tests/app.test.ts",
+              "tests/e2e-month.test.ts"
+            ],
+            "siblingOwned": [],
+            "produces": [
+              "`createApp(deps: AppDeps): App`",
+              "`type AppDeps = { storage: Storage; config: ConfigStore; discord: DiscordPort; ids?: () => string }`",
+              "`class FakeDiscord implements DiscordPort`"
+            ],
+            "consumes": [
+              "`feasible(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, now: number): boolean`",
+              "`sharedHours(a: { mask: Mask; timezone: string }, b: { mask: Mask; timezone: string }, fromUtc: number, hours: number): number[]`",
+              "`DEFAULT_MASK: Mask`",
+              "`orBlock(mask: Mask, days: readonly number[], hours: readonly number[]): Mask`",
+              "`PRESETS: Readonly<Record<Exclude<AvailabilityPreset, 'custom'>, Mask>>`",
+              "`compose(weights: Weights, strategies: readonly Strategy<any>[]): Strategy`",
+              "`STRATEGIES: Readonly<Record<string, Strategy<any>>>`",
+              "`match(pool: readonly Participant[], history: readonly PairingRecord[], strategy: Strategy<any>, opts: MatchOptions): ProposedPair[]`",
+              "`joinMember(existing: MemberRow | null, opts: { timezone?: string; avoid?: readonly MemberId[] }, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null, ids: { guildId: GuildId; id: MemberId }): MemberRow`",
+              "`resumeMember(row: MemberRow, now: number, cfg: EnrollmentConfig, lastPairingAt: number | null): MemberRow`",
+              "`pauseMember(row: MemberRow): MemberRow`",
+              "`isSilent(evidence: { posted: boolean; tapped: boolean; partnerYes: boolean }): boolean`",
+              "`closePairing(row: MemberRow, silent: boolean, now: number, cfg: EnrollmentConfig): MemberRow`",
+              "`recordEvidence(row: MemberRow): MemberRow`",
+              "`sendCheckin(row: MemberRow, now: number): MemberRow`",
+              "`answerCheckin(row: MemberRow, answer: 'keep' | 'pause'): MemberRow`",
+              "`expireCheckin(row: MemberRow, now: number, cfg: EnrollmentConfig): { row: MemberRow; action: 'none' | 'resend' | 'auto-paused' }`",
+              "`DEFAULT_MASK_LITERAL: Mask`",
+              "`decidePool(input: PoolInput): PoolDecision`",
+              "`transition(s: SchedulingState, ev: SchedulingEvent, now: number, cfg: SchedulingConfig): { next: SchedulingState; effects: readonly Effect[] }`",
+              "`initialState(members: readonly [MemberId, MemberId]): SchedulingState`",
+              "`proposeSlots(shared: readonly number[], now: number, opts: SlotOptions): number[]`",
+              "`alternatives(shared: readonly number[], now: number, chosen: number, opts: SlotOptions): number[]`",
+              "`ics(event: IcsEvent): string`",
+              "`class Scheduler { constructor(store: JobStore, ids?: () => string); schedule(guildId: GuildId, kind: JobKind, refId: string, runAt: number, now: number): Job; cancel(guildId: GuildId, kind: JobKind, refId: string): number; runDue(now: number, handler: (job: Job) => Promise<void> | void): Promise<{ fired: number; errors: readonly Error[] }> }`",
+              "`openStorage(path: string): Storage`",
+              "`renderCopy(cfg: Pick<GuildConfig, 'copy'>, key: CopyKey, vars?: Readonly<Record<string, string | number>>): string`",
+              "`parseConfig(toml: string): ConfigStore`",
+              "`availabilityMenu(preset: AvailabilityPreset): OutgoingMessage`",
+              "`daysSelect(): SelectMenu`",
+              "`hoursSelect(): SelectMenu`",
+              "`customId(action: string, ref: string): string`",
+              "`parseCustomId(id: string): { action: string; ref: string }`"
+            ]
+          }
+        }
+      ],
+      [
+        {
+          "id": "14",
+          "title": "The discord.js client and the entry point",
+          "files": [
+            "src/adapters/discord/client.ts",
+            "src/main.ts",
+            "tests/discord-client.test.ts"
+          ],
+          "depends_on": [],
+          "interfaces": {
+            "consumes": [
+              "`createApp(deps: AppDeps): App`",
+              "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+              "`zoneSuggestions(query: string, limit?: number): string[]`",
+              "`permissionsBitfield(): bigint`",
+              "`inviteUrl(clientId: string): string`",
+              "`loadConfig(path: string): ConfigStore`",
+              "`openStorage(path: string): Storage`"
+            ],
+            "produces": [
+              "`toIncoming(i: InteractionLike): Incoming | null`",
+              "`toThreadMessage(m: MessageLike): Incoming | null`",
+              "`createDiscordPort(client: ClientLike): DiscordPort`",
+              "`autocompleteZones(i: AutocompleteLike): Promise<void>`",
+              "`startBot(opts: { token: string; configPath: string; dbPath: string; tickMs: number }): Promise<void>`"
+            ]
+          },
+          "tier": null,
+          "review": "peer",
+          "writes": [
+            "src/adapters/discord/client.ts",
+            "src/main.ts"
+          ],
+          "commutes": [],
+          "proofTests": [
+            "tests/discord-client.test.ts"
+          ],
+          "testCmd": "bun test tests/discord-client.test.ts",
+          "proofRuns": [
+            "DISCORD_TOKEN= bun run src/main.ts --check-config config.example.toml > /tmp/check.txt && grep -q 'permissions=360778304528' /tmp/check.txt && grep -q 'guilds: 1' /tmp/check.txt",
+            "DISCORD_TOKEN= bun run src/main.ts --check-config /nonexistent.toml > /tmp/check2.txt 2>&1; test $? -eq 1 && grep -q 'nonexistent.toml' /tmp/check2.txt"
+          ],
+          "proofGuards": [
+            "tests/discord-client.test.ts"
+          ],
+          "factsheet": {
+            "files": [
+              "src/adapters/discord/client.ts",
+              "src/main.ts",
+              "tests/discord-client.test.ts"
+            ],
+            "deletes": [],
+            "guards": [
+              "tests/discord-client.test.ts"
+            ],
+            "proofTests": [
+              "tests/discord-client.test.ts"
+            ],
+            "landing": {
+              "tests/discord-client.test.ts": "tests/discord-client.test.ts"
+            },
+            "driverOwned": [
+              "tests/discord-client.test.ts"
+            ],
+            "siblingOwned": [],
+            "produces": [
+              "`toIncoming(i: InteractionLike): Incoming | null`",
+              "`toThreadMessage(m: MessageLike): Incoming | null`",
+              "`createDiscordPort(client: ClientLike): DiscordPort`",
+              "`autocompleteZones(i: AutocompleteLike): Promise<void>`",
+              "`startBot(opts: { token: string; configPath: string; dbPath: string; tickMs: number }): Promise<void>`"
+            ],
+            "consumes": [
+              "`createApp(deps: AppDeps): App`",
+              "`commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[]`",
+              "`zoneSuggestions(query: string, limit?: number): string[]`",
+              "`permissionsBitfield(): bigint`",
+              "`inviteUrl(clientId: string): string`",
+              "`loadConfig(path: string): ConfigStore`",
+              "`openStorage(path: string): Storage`"
+            ]
+          }
+        }
+      ]
+    ],
+    "waveLabels": [
+      "12 parallel tasks",
+      "The app: handlers, jobs, and the simulated month",
+      "The discord.js client and the entry point"
+    ],
+    "mode": "parallel",
+    "degrade_reason": null,
+    "globalConstraints": "- Every shared shape is imported from `src/types.ts`; no module redeclares `Strategy`, `Context`, `MemberRow`, `PairingRecord`, `Job`, `Storage`, `GuildConfig`, `DiscordPort`, `Incoming` or `App`.\n- No test sleeps and no test reads the wall clock: every time-based behaviour takes an injected `now` (epoch milliseconds) and tests drive it.\n- Tests never share on-disk state: a test needing a database opens `:memory:`; a test writing files uses its own `mkdtemp` directory.\n- Only `src/adapters/discord/` and `src/main.ts` import `discord.js`. `src/core/`, `src/jobs/`, `src/storage/` and `src/config/` import nothing platform-specific.\n- Every table has a `guild_id` column and every query is scoped by it.\n- No user-facing string in `src/` or `config.example.toml` contains an em dash (U+2014), the word \"experiment\", or any mention of KmikeyM, shares or votes. Copy uses commas, periods, colons or parentheses instead.\n- A `Mask` is exactly 168 characters of `0` or `1`, index 0 being Monday 00:00 local; any function given another length throws an `Error` whose message contains `168`.\n\n**Acceptance:** suite, plus per-task review. Task 13's simulated month is the integration-spanning exam: per-task green never establishes the seams. The live install on the KmikeyM Discord is Task 15, a manual step outside the fleet run.",
+    "constraintChecks": [
+      {
+        "cmd": "bunx tsc --noEmit && bun test",
+        "minor": false
+      },
+      {
+        "cmd": "test -z \"$(grep -rl 'discord.js' src --include=*.ts | grep -v -e '^src/adapters/discord/' -e '^src/main.ts')\"",
+        "minor": false
+      },
+      {
+        "cmd": "test -z \"$(grep -rn -e '\u2014' src config.example.toml README.md Dockerfile docker-compose.yml 2>/dev/null)\"",
+        "minor": false
+      },
+      {
+        "cmd": "test -z \"$(grep -rniE 'kmikeym|shareholder|experiment' src config.example.toml 2>/dev/null)\"",
+        "minor": false
+      }
+    ],
+    "launch_file": "/home/exedev/target/.claude/ultrapowers/run-run-2/launch.json",
+    "args_file": "/home/exedev/target/.claude/ultrapowers/run-run-2/args.json"
+  },
+  "baseBranch": "main",
+  "launchFile": "/home/exedev/target/.claude/ultrapowers/run-run-2/launch.json",
+  "argsFile": "/home/exedev/target/.claude/ultrapowers/run-run-2/args.json",
+  "workflowName": "ultrapowers-run",
+  "llmDerives": [
+    "waves[][].tier on the args-file wave entries (slots pre-emitted as null; the engine reads knobs ONLY from these inline entries \u2014 never a top-level launch key)",
+    "nothing for waves[][].testCmd \u2014 the per-task command is compiler-derived from the task's Proof `Test:` paths and pre-filled on the wave entries (run-wide testCmd is driver-derived \u2014 knob or detection \u2014 and already stamped in the args file and receipt)",
+    "nothing for bootstrapCmd \u2014 driver-derived from the target's lockfile/manifest (or the --bootstrap-cmd knob) and stamped in the args file and receipt, so validation, the engine and the gate share one value",
+    "nothing for review depth \u2014 it is plan-authored (**Review:** marker), pre-filled on the args wave entries"
+  ],
+  "testCmd": "npm test",
+  "testCmdSource": "detected:package-json-npm",
+  "bootstrapCmd": "npm install --no-package-lock",
+  "bootstrapCmdSource": "detected:package-json"
+}
