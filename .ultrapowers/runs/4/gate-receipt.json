@@ -1,0 +1,56 @@
+{
+  "mode": "gate",
+  "stamp": "run-4",
+  "reportPath": "/home/exedev/target/.claude/ultrapowers/run-run-4/report.json",
+  "branch": "ultra/integration-run-4",
+  "gateCheck": {
+    "verdict": "PASS",
+    "checks": [
+      {
+        "name": "report-parse",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "clean-tree",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "wave-merges",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "head-match",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "git-verified",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "ancestry",
+        "ok": true,
+        "detail": ""
+      },
+      {
+        "name": "deliverables",
+        "ok": true,
+        "detail": ""
+      }
+    ],
+    "acks": [],
+    "notes": [],
+    "repo": "/home/exedev/target"
+  },
+  "gateCheckExit": 0,
+  "suite": {
+    "passed": true,
+    "unattributed": [],
+    "output": "n thread [0.43ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): a proposal, a confirmation and an outcome each read back whole [0.48ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): updateProposal with state 'superseded' reads back superseded [0.39ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): allOutcomes returns every outcome of the guild [0.43ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): the member's own rows are gone [0.70ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): proposals they authored keep the row with proposedBy null [0.55ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): pending jobs about the member are cancelled, jobs about the pairing are not [0.58ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): the partner's row, the pairing and the partner's outcome are untouched [0.64ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): dueJobs(now) is pending jobs with runAt <= now, ascending by runAt then id [0.36ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): completeJob returns true once and false thereafter [0.36ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): cancelJobs returns the count and drops them out of dueJobs [0.46ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): pendingJobs is guild-scoped [0.37ms]\n(pass) M7: the SQL stays generic > leg (g): no AUTOINCREMENT, WITHOUT ROWID, json_extract or STRICT, and only the two pragmas [0.31ms]\n\ntests/app.test.ts:\n(pass) leg (a) [M1]: /join enrols, replies ephemerally and schedules eligible > a join with a timezone stores the row, replies, and queues one eligible job [0.83ms]\n(pass) leg (a) [M1]: /join enrols, replies ephemerally and schedules eligible > a join with no timezone replies about the timezone and stores nothing [0.44ms]\n(pass) leg (b) [M2]: a tick introduces two strangers with a time on the table > one pairing, one private thread, introduction then proposal, dates pushed out [5.82ms]\n(pass) leg (c) [M3]: two confirmations lock the call > state locked, an .ics post carrying the locked copy, and the three call jobs [5.16ms]\n(pass) leg (d) [M4]: the voice room opens ten minutes early and closes after > one createVoiceChannel with the configured category, the link post, one deleteChannel [5.35ms]\n(pass) leg (e) [M5]: the follow-up asks, and each member answers once > follow-up post, completed, yes and notyet recorded, a second answer records nothing [5.25ms]\n(pass) leg (f) [M6]: silence raises the gate, and the check-in lowers it > both rows need an acknowledgement after a silent pairing ends [4.69ms]\n(pass) leg (f) [M6]: silence raises the gate, and the check-in lowers it > the check-in goes to a thread of one, and no pairing includes them until keep [20.78ms]\n(pass) leg (f) [M6]: silence raises the gate, and the check-in lowers it > a partner's yes clears the gate for both, a partner's notyet for neither [8.84ms]\n(pass) leg (g) [M7]: pause, resume, forget, and a timezone that moves a call > pause reads back paused; resume and a second join both return the member [4.23ms]\n(pass) leg (g) [M7]: pause, resume, forget, and a timezone that moves a call > forget deletes the row and replies with the forgotten copy [4.48ms]\n(pass) leg (g) [M7]: pause, resume, forget, and a timezone that moves a call > a timezone that moves a locked call outside the mask asks; one that does not says nothing [5.46ms]\n(pass) leg (h) [M8]: the admin commands > admin-pair forces a feasible pair and refuses an infeasible one [2.24ms]\n(pass) leg (h) [M8]: the admin commands > admin-status reports the pool, the open pairings and the reconnection share [1.04ms]\n(pass) leg (j) [M10]: the two default masks are the same string > DEFAULT_MASK equals DEFAULT_MASK_LITERAL [0.03ms]\n\n 316 pass\n 0 fail\n 2954 expect() calls\nRan 316 tests across 15 files. [1.78s]\n"
+  },
+  "verdict": "PASS"
+}

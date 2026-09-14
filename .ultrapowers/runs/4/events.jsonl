@@ -74,3 +74,17 @@
 {"kind":"worker:start","label":"review:14:1","role":"reviewer","sessionId":"5b664417-c1d4-46b1-a911-397bfd704cbd","cwd":"/home/exedev/target/.claude/ultrapowers/run-run-4/clones/integration","model":"opus","id":"01M2H3MQE300003QMG3ZFN54K8","ts":1789428129219}
 {"kind":"worker:end","label":"review:14:1","role":"reviewer","sessionId":"5b664417-c1d4-46b1-a911-397bfd704cbd","exitCode":0,"timedOut":false,"outcome":"ok","class":"success","status":null,"meter":{"input":8558,"output":11865,"cacheRead":387534,"cacheCreation":43721,"costUsd":0.9703919999999999,"models":["claude-opus-5"]},"id":"01M2H3SDX10000A5QGDVK4PT7E","ts":1789428283297}
 {"kind":"transcript:slice","label":"review:14:1","sessionId":"5b664417-c1d4-46b1-a911-397bfd704cbd","bytes":11490,"id":"01M2H3SDX40000XW7QKR71PVV9","ts":1789428283300}
+{"kind":"driver:wave-adopted","wave":3,"tasks":["14"],"headSha":"a98b33568bf6394f4875646393b9f69e31e174ef","id":"01M2H3SJ0G0000B3QZ9BSHHHQZ","ts":1789428287504}
+{"kind":"driver:integrated-clean","wave":3,"removed":0,"id":"01M2H3SJ0P0000VVV9H4JQNY88","ts":1789428287510}
+{"kind":"driver:integrated-check","cmd":"bunx tsc --noEmit && bun test","exit":0,"minor":false,"wave":3,"id":"01M2H3SNHP000080SSV8RA5TB5","ts":1789428291126}
+{"kind":"driver:integrated-check","cmd":"test -z \"$(grep -rl 'discord.js' src --include=*.ts | grep -v -e '^src/adapters/discord/' -e '^src/main.ts')\"","exit":0,"minor":false,"wave":3,"id":"01M2H3SNHY0000VZ1WPTJM2EP6","ts":1789428291134}
+{"kind":"driver:integrated-check","cmd":"test -z \"$(grep -rn -e '—' src config.example.toml README.md Dockerfile docker-compose.yml 2>/dev/null)\"","exit":0,"minor":false,"wave":3,"id":"01M2H3SNJ50000RKRHR2MP60BX","ts":1789428291141}
+{"kind":"driver:integrated-check","cmd":"test -z \"$(grep -rniE 'kmikeym|shareholder|experiment' src config.example.toml 2>/dev/null)\"","exit":0,"minor":false,"wave":3,"id":"01M2H3SNJC000069430KV19K3B","ts":1789428291148}
+{"kind":"driver:stage","stage":"engine-done","detail":"report saved","id":"01M2H3SNPF0000J3826K5E7ZSX","ts":1789428291279}
+{"kind":"driver:stage","stage":"finalize","id":"01M2H3SNQY0000WVM4AWB69KEF","ts":1789428291326}
+{"kind":"driver:stage","stage":"gate","id":"01M2H3SNSK00005DB69FY5NY4M","ts":1789428291379}
+{"kind":"driver:critic-decision","approve":true,"reason":"0 completeness finding(s), none blocking","id":"01M2H3SNVP0000FAPFZVX0CNXK","ts":1789428291446}
+{"kind":"driver:stage","stage":"approve","id":"01M2H3SNVP0001BCR2GAGBV75B","ts":1789428291446}
+{"kind":"driver:approved","stamp":"run-4","integrationBranch":"ultra/integration-run-4","id":"01M2H3SNWT000042FNX6RSP302","ts":1789428291482}
+{"kind":"run:open","runId":"run-4","base":"720ab2dc7c78cd9a21c2fa85e2688499d25967ba","source":"fleet/publish-fold.mjs","id":"01M2H3SPST0000MY44E6T1HYC9","ts":1789428292410}
+{"kind":"driver:publish-fold","run":"4","attempt":"1","base":"720ab2dc7c78cd9a21c2fa85e2688499d25967ba","tip":"720ab2dc7c78cd9a21c2fa85e2688499d25967ba","candidate":"a98b33568bf6394f4875646393b9f69e31e174ef","pathsJoined":0,"pathsConflicted":0,"resolversDispatched":0,"resolverRetries":0,"suite":"none","disposition":"nothing to join","checks":[],"checkRetries":0,"id":"01M2H3SQ5P0000P2VRE8P93ND0","ts":1789428292790}

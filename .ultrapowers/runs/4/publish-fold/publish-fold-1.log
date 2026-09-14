@@ -1,0 +1,8 @@
+Running as unit: fleet-fold-4-1.service
+publish-fold: attempt 1 — nothing to join
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 423ms
+CPU time consumed: 90ms
+Memory peak: 4.9M
+Memory swap peak: 0B
