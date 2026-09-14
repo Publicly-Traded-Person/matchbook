@@ -1,0 +1,8 @@
+node_modules
+config.toml
+data
+.git
+.gitignore
+docs
+tests
+*.db
