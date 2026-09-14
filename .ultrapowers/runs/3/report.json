@@ -1,0 +1,123 @@
+{
+  "integrationBranch": "ultra/integration-run-3",
+  "baseSha": "720ab2dc7c78cd9a21c2fa85e2688499d25967ba",
+  "waves": [
+    [
+      "4"
+    ],
+    [
+      "13"
+    ],
+    [
+      "14"
+    ]
+  ],
+  "dependencyEdges": [
+    "4 -> 13 (interface)",
+    "13 -> 14 (interface)"
+  ],
+  "tasks": [
+    {
+      "task": "4",
+      "baseCorrected": null,
+      "status": "failed",
+      "branch": "",
+      "exam": "red",
+      "reviewVerdict": "fix-loop-exhausted",
+      "notes": "INTERFACES violation: the Produces contract declares `joinMember(existing, opts, now, cfg, lastPairingAt, ids: { guildId: GuildId; id: MemberId }): MemberRow` with `ids` required, but src/core/enrollment.ts:73 gives it a default of `{ guildId: '', id: '' }`. The diff therefore does not produce the named signature, and the widening is undisclosed (no comment explains it). The failure mode is silent and lands downstream: a fresh join made with five arguments compiles and returns a MemberRow whose primary key is the empty string in guild '', which Task 13 then writes through `storage.upsertMember` \u2014 an invalid, unscoped row rather than a compile error, against the global constraint that every table has a `guild_id` and every query is scoped by it. The task's M1/M2 prose does write five-argument calls (`joinMember(null, { timezone: 'Europe/Belgrade' }, now, cfg, null)`), which is presumably the motive, but those clauses abbreviate \u2014 M3 elides the tail as `\u2026` \u2014 and the peer's exam passes IDS on every call (tests/enrollment.test.ts:249, and every `joinMember` call site), as does Task 13's Consumes entry. Making `ids` required again keeps every current caller compiling: nothing else in the tree calls `joinMember` (only docs/design.md, README.md and src/config/copy.ts mention the name, all in prose), and the exam already supplies it, so the suite and `bunx tsc --noEmit` stay green.",
+      "tier": "opus",
+      "review": "peer",
+      "fixIterations": 0,
+      "proposedPatches": 1,
+      "proofFixes": 0,
+      "examEdited": [],
+      "stateExams": []
+    }
+  ],
+  "tests": {
+    "command": "npm test",
+    "passed": false,
+    "output": "not run \u2014 no wave merged",
+    "unattributed": []
+  },
+  "integratedRuns": [],
+  "integratedChecks": [],
+  "reviewEconomy": {
+    "reviewerMs": 128802,
+    "blockingFindings": 1,
+    "blockingPerReviewerMinute": 0.4658312759118647
+  },
+  "baseline": {
+    "passed": true,
+    "output": "Pairings returns the five non-terminal states and no others [0.56ms]\n(pass) M3: pairings and their members > leg (c): touchPairingMember records lastActivityAt for that member only [0.77ms]\n(pass) M3: pairings and their members > leg (c): pairingByThread finds by threadId and is null for an unknown thread [0.43ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): a proposal, a confirmation and an outcome each read back whole [0.57ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): updateProposal with state 'superseded' reads back superseded [0.39ms]\n(pass) M4: proposals, confirmations and outcomes > leg (d): allOutcomes returns every outcome of the guild [0.45ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): the member's own rows are gone [0.71ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): proposals they authored keep the row with proposedBy null [0.53ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): pending jobs about the member are cancelled, jobs about the pairing are not [1.35ms]\n(pass) M5: forgetMember deletes only what is the member's own > leg (e): the partner's row, the pairing and the partner's outcome are untouched [0.63ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): dueJobs(now) is pending jobs with runAt <= now, ascending by runAt then id [0.39ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): completeJob returns true once and false thereafter [0.40ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): cancelJobs returns the count and drops them out of dueJobs [0.44ms]\n(pass) M6: the JobStore behaves as src/types.ts documents > leg (f): pendingJobs is guild-scoped [0.35ms]\n(pass) M7: the SQL stays generic > leg (g): no AUTOINCREMENT, WITHOUT ROWID, json_extract or STRICT, and only the two pragmas [0.79ms]\n\n 240 pass\n 0 fail\n 1768 expect() calls\nRan 240 tests across 11 files. [307.00ms]\n"
+  },
+  "waveMerges": [
+    {
+      "wave": 1,
+      "status": "SKIPPED",
+      "detail": "no mergeable results \u2014 every task in this wave failed, was blocked, or lost its coordinates; integration branch untouched",
+      "branches": []
+    },
+    {
+      "wave": 2,
+      "status": "SKIPPED",
+      "detail": "no mergeable results \u2014 every task in this wave failed, was blocked, or lost its coordinates; integration branch untouched",
+      "branches": []
+    },
+    {
+      "wave": 3,
+      "status": "SKIPPED",
+      "detail": "no mergeable results \u2014 every task in this wave failed, was blocked, or lost its coordinates; integration branch untouched",
+      "branches": []
+    }
+  ],
+  "frontier": [],
+  "coverage": {
+    "tasks_merged": 0,
+    "tasks_planned": 3,
+    "complete": false
+  },
+  "missingDeliverables": [
+    {
+      "task": "4",
+      "files": [
+        "src/core/enrollment.ts",
+        "tests/enrollment.test.ts"
+      ]
+    },
+    {
+      "task": "13",
+      "files": [
+        "src/app/handlers.ts",
+        "src/app/index.ts",
+        "src/app/jobs.ts",
+        "tests/app.test.ts",
+        "tests/e2e-month.test.ts",
+        "tests/fixtures/members-20.json",
+        "tests/helpers/fake-discord.ts"
+      ]
+    },
+    {
+      "task": "14",
+      "files": [
+        "src/adapters/discord/client.ts",
+        "src/main.ts",
+        "tests/discord-client.test.ts"
+      ]
+    }
+  ],
+  "gitVerified": false,
+  "ancestryMisses": [],
+  "deferredVerification": [],
+  "judgmentCalls": [
+    "task 4: plan-defect: the Produces signature makes `ids` a required sixth parameter of `joinMember`, but Machine lines M1 and M2 both call it with five arguments (`joinMember(null, { timezone: 'Europe/Belgrade' }, now, cfg, null)`), which would not compile against a required parameter. I resolved this by declaring `ids?: { guildId: GuildId; id: MemberId }` with a `{ guildId: '', id: '' }` default, so both the five-argument exam calls and six-argument production calls typecheck and the produced contract is still satisfied. This is a disclosure, not a park: the legs are all satisfiable and I verified they pass.",
+    "task 4: plan-defect: M5 says closePairing 'leaves needsAck false otherwise', which is ambiguous between assigning false and preserving an existing true. I implemented `needsAck: silent` (assignment), which satisfies leg (e) under either reading since the leg's input row is not gated. Disclosure only.",
+    "task 4: M2/leg (b) names five fields that must be copied through unchanged on resume and does not mention `checkinSentAt`; following the task's Context note that all unnamed fields are copied through, resume leaves `checkinSentAt` as it was rather than clearing it. `answerCheckin(row, 'keep')` is the path that clears it, per M6."
+  ],
+  "unfinished": [
+    "13: blocked \u2014 depends on a failed task",
+    "14: blocked \u2014 depends on a failed task"
+  ],
+  "completenessFindings": [],
+  "blockedWaves": []
+}
