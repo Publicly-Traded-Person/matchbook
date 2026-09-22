@@ -162,7 +162,9 @@ Bundled, four:
   members are actually available (§5). It ranks feasible pairs; it does not
   decide feasibility, which is a precondition (below, #16).
 - `round-robin` (reads `pairing-history`): deterministic rotation, ignores
-  everything else.
+  everything else. A pair never paired scores 1; a repeat scores d / (d + 14),
+  with d the days since their most recent pairing. Strangers always outrank
+  repeats, and among repeats the least recent wins (#22).
 
 **Shared availability is a precondition for a pair, not a term in its score
 (#16).** A pair is *feasible* only if the AND of their projected masks (§5) is
@@ -437,6 +439,12 @@ available block into the mask per pass. Run it again to add another block; a
 `Clear` button empties the mask. The chosen preset is remembered so reopening the
 menu shows current state.
 
+The presets are (#22): `Any reasonable hour`, 09:00 to 21:00 every day (the
+default); `Evenings only`, 17:00 to 21:00 every day; `Weekends only`, 09:00 to
+21:00 on Saturday and Sunday; `Weekdays 9 to 5 off`, the default minus Monday to
+Friday 09:00 to 17:00. Every preset stays inside the 09:00 to 21:00 envelope, so
+no preset proposes 03:00.
+
 **Slot proposal.** AND the two masks, project to UTC, and take candidate
 30-minute slots in the next 3 to 10 days that fall inside the shared hours,
 preferring evenings local to both. Propose one. On "Pick another time", offer up
@@ -536,11 +544,12 @@ guilds(guild_id PK, created_at)
 members(guild_id, discord_user_id, state, timezone, tags, avoid_notes,
         availability_mask, availability_preset, eligible_at,
         welcome, last_welcome_at,
-        needs_ack, checkins_ignored, checkin_sent_at, joined_at,
+        needs_ack, checkins_ignored, checkin_sent_at, overlap_notice_at,
+        joined_at,
         PRIMARY KEY(guild_id, discord_user_id))
 pairings(id PK, guild_id, thread_id, voice_channel_id, state, novelty,
          created_at)   -- novelty: fresh | held | reconnect | welcome | forced
-pairing_members(guild_id, pairing_id, discord_user_id)
+pairing_members(guild_id, pairing_id, discord_user_id, last_activity_at)
 proposals(id PK, guild_id, pairing_id, start_utc, duration_min, state,
           proposed_by, created_at)
 confirmations(guild_id, proposal_id, discord_user_id, confirmed_at)
@@ -554,6 +563,11 @@ model. `pairings.novelty` records how the pairing was produced
 reconnections over time is the number that says the pool needs to grow, and the
 share of welcomes says whether launch-week demand outran the pool. `welcome` and
 `last_welcome_at` are the volunteer flag and its seven-day throttle (#17).
+`overlap_notice_at` is when a member whose mask overlaps nobody's was last told
+so; "told once" needs a record (#21). `pairing_members.last_activity_at` is when
+that member last posted in the pairing thread, never what they posted: a thread
+post counts as evidence in §4a, and §5 sends a released pairing to follow-up
+only if someone posted (#21).
 
 `members.state` is one of `active | paused`. A member who leaves is deleted, not
 flagged, so `/forget` is a real deletion. `needs_ack` and `checkins_ignored`
@@ -642,7 +656,13 @@ paired sooner than cadence minus the pull-forward limit after their last
 pairing, except as a welcomer; a welcomer with an open pairing is never chosen; a member with an unmet active member somewhere is held rather than
 repeated, for no longer than one cadence; a member who has met everyone is paired
 with their least-recent partner without holding; a synchronized twelve-member
-cohort is spread across the period within three cycles of simulated newcomers.
+cohort is spread across the period within three cycles of simulated newcomers,
+**provided newcomers arrive slowly enough that a lone newcomer's holding window
+lands within the pull-forward limit of a cohort date** (#20). Measured
+2026-09-14: one newcomer every 5 days leaves the twelve on 4 distinct eligible
+dates; one every day leaves them on 1, because newcomers pair with each other
+before any cohort member is in reach. Build 1 pins the 5-day case (at least 3
+distinct dates).
 
 **Jobs**: every job kind fires at most once, at or after its `run_at`, never
 after cancellation, and survives a simulated restart between scheduling and firing. No test sleeps.
@@ -689,8 +709,9 @@ Stored: Discord user ID, opt-in state, timezone, self-declared tags and
 avoid-notes, a weekly availability pattern, an eligibility date, pairing
 history, proposed and confirmed times, one answer per member per pairing to "did
 you two connect," a hygiene flag, counter and timestamp, a welcome-volunteer
-flag and its last-use date, the chosen availability preset, and a join date.
-That is the entire schema.
+flag and its last-use date, the chosen availability preset, a join date, the
+date a member was told nobody shares their hours, and the time of a member's
+last post in a pairing thread (not its content). That is the entire schema.
 
 Never stored: message content, voice, or anything from an operator's private
 knowledge base.
