@@ -132,6 +132,19 @@ export function formatIcsTime(ms: number): string {
   )
 }
 
+/**
+ * The attachment name for a calendar file: the summary lowercased, every run of
+ * anything but ASCII letters and digits folded to one hyphen, ends trimmed.
+ * `matchbook.ics` when nothing survives, so the file always has a name.
+ */
+export function icsFileName(summary: string): string {
+  const slug = summary
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return `${slug === '' ? 'matchbook' : slug}.ics`
+}
+
 /** RFC 5545 text escaping for SUMMARY, DESCRIPTION and LOCATION values. */
 function escapeText(value: string): string {
   return value

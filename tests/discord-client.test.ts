@@ -514,8 +514,9 @@ function fakeClient(): {
     },
     members: {
       async add(): Promise<void> {},
-      async fetch(id: string): Promise<{ id: string }> {
-        return { id }
+      async fetch(id: string): Promise<{ id: string; displayName?: string }> {
+        if (id === "GHOST") throw new Error("Unknown Member")
+        return { id, displayName: `Name ${id}` }
       },
     },
   }
@@ -652,6 +653,20 @@ async function runMain(args: readonly string[]): Promise<MainRun> {
   const code = await proc.exited
   return { code, stdout, combined: stdout + stderr }
 }
+
+describe("createDiscordPort.displayName reads the guild member's display name", () => {
+  test("returns the member's displayName", async () => {
+    const fake = fakeClient()
+    const port = createDiscordPort(fake.client)
+    expect(await port.displayName(GUILD, "U9")).toBe("Name U9")
+  })
+
+  test("falls back to the id when the member cannot be fetched", async () => {
+    const fake = fakeClient()
+    const port = createDiscordPort(fake.client)
+    expect(await port.displayName(GUILD, "GHOST")).toBe("GHOST")
+  })
+})
 
 describe("leg (d) [M4] --check-config on the shipped example", () => {
   test("exits 0 and prints the permissions bitfield and the guild count", async () => {

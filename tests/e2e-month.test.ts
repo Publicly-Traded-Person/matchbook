@@ -176,6 +176,10 @@ class Recorder implements DiscordPort {
     this.calls.push({ method: 'deleteChannel', args: [guildId, channelId], result: undefined })
   }
 
+  async displayName(guildId: GuildId, memberId: MemberId): Promise<string> {
+    return this.inner.displayName(guildId, memberId)
+  }
+
   of(method: CallName): Call[] {
     return this.calls.filter((c) => c.method === method)
   }

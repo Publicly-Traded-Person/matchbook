@@ -517,6 +517,11 @@ burden this feature exists to remove. A standing weekly mask is answered once.
 `LOCATION` set to the pairing's thread URL, which is where the room link will
 appear. No `ORGANIZER` or `ATTENDEE`: those require `mailto:` addresses the bot
 does not have and must not collect. No Discord scheduled event is created (§3).
+`SUMMARY` and `DESCRIPTION` are the copy keys `ics-summary` and
+`ics-description` (#27), whose `{a}` and `{b}` are the two members' display
+names, read from the guild at the moment of the lock and kept nowhere. The
+attachment is named after the summary, lowercased and hyphenated, so a member
+sees who the file is for before opening it.
 
 **Ten minutes before the call**, one job creates the private voice channel under
 the configured category, with View Channel and Connect granted to the two

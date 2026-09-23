@@ -112,10 +112,21 @@ export interface ThreadLike extends ChannelLike {
   readonly members?: { add(id: string, reason?: string): Promise<unknown> | unknown }
 }
 
+/** One guild member, as far as displayName reads it. */
+export interface GuildMemberLike {
+  readonly displayName?: string | null
+  readonly nickname?: string | null
+  readonly user?: { readonly globalName?: string | null; readonly username?: string | null } | null
+}
+
 /** One guild, as far as the port reaches into it. */
 export interface GuildLike {
   readonly id?: string
   readonly roles?: { readonly everyone?: IdLike }
+  /** Member lookup, as far as displayName reads it. */
+  readonly members?: {
+    fetch?(id: string): Promise<GuildMemberLike | null | undefined> | GuildMemberLike | null | undefined
+  }
   readonly channels: {
     create(options: unknown): Promise<ChannelLike | null | undefined> | ChannelLike | null | undefined
     fetch?(id: string): Promise<ChannelLike | null | undefined> | ChannelLike | null | undefined
@@ -432,6 +443,21 @@ export function createDiscordPort(client: ClientLike): DiscordPort {
     async deleteChannel(guildId: GuildId, channelId: string): Promise<void> {
       const channel = await channelOf(guildId, channelId)
       await channel.delete?.()
+    },
+
+    // Read once for a sentence or a file, never stored (#27). Any failure, a
+    // member who left or an API error, degrades to the id rather than blocking
+    // the lock that asked.
+    async displayName(guildId: GuildId, memberId: MemberId): Promise<string> {
+      try {
+        const guild = await guildOf(guildId)
+        const member = await guild.members?.fetch?.(memberId)
+        const name =
+          member?.displayName ?? member?.nickname ?? member?.user?.globalName ?? member?.user?.username
+        return name === undefined || name === null || name === '' ? memberId : name
+      } catch {
+        return memberId
+      }
     },
   }
 }
