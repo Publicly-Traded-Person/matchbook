@@ -186,8 +186,11 @@ ssh acorn 'launchctl print gui/501/com.kmikeym.matchbook | grep -E "state|pid"; 
 ```
 
 Pass when: `state = running`, the log shows the client logged in and guild
-commands registered, and Mike sees seven commands under Matchbook when he types
-`/` (join, timezone, availability, pause, resume, forget, matchbook).
+commands registered, and Mike sees nine entries under Matchbook when he types
+`/`: join, timezone, availability, pause, resume, forget, and the three admin
+subcommands matchbook config, matchbook status, matchbook pair. (Seven commands
+are registered; Discord's picker lists each subcommand as its own row and hides
+the bare parent, so seven registered shows as nine.)
 
 **Restart survival without rebooting a shared box:**
 `ssh acorn 'launchctl kickstart -k gui/501/com.kmikeym.matchbook'` and confirm it
@@ -224,7 +227,7 @@ nightly Time Machine job (`~/.local/bin/tm-nightly`); confirm it covers
 Task 15's proof is observations, each with a timestamp:
 
 - the invite URL used was the one `--check-config` printed;
-- seven commands listed under `/`;
+- nine entries listed under `/` (seven commands, `/matchbook` expanded to three);
 - `kickstart -k` brought it back running;
 - both `/join` times and the thread's creation time;
 - the thread is under the configured channel and a third member cannot see it;
