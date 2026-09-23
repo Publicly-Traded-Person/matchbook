@@ -80,6 +80,16 @@ export const DEFAULT_COPY: Readonly<Record<CopyKey, string>> = Object.freeze({
 })
 
 /**
+ * An instant for a sentence: Discord's `<t:epoch:F>` markup, which every client
+ * renders in the viewer's own local timezone (spec, Timezones). Every `{start}`
+ * and `{time}` the bot fills goes through here; a raw millisecond never reaches
+ * a member.
+ */
+export function discordTime(utcMs: number): string {
+  return `<t:${Math.floor(utcMs / 1000)}:F>`
+}
+
+/**
  * The template for `key`, with `{name}` placeholders substituted from `vars`.
  * A server override in `cfg.copy` wins over `DEFAULT_COPY`.
  *
