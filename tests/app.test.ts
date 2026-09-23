@@ -27,7 +27,7 @@ import type {
 import { createApp } from '../src/app/index'
 import { openStorage } from '../src/storage/sqlite'
 import { parseConfig } from '../src/config/file-store'
-import { renderCopy } from '../src/config/copy'
+import { discordTime, renderCopy } from '../src/config/copy'
 import { DEFAULT_MASK, sharedHours } from '../src/core/availability'
 import { DEFAULT_MASK_LITERAL } from '../src/core/enrollment'
 import { FakeDiscord } from './helpers/fake-discord'
@@ -72,7 +72,7 @@ counter = "Counter: {start}."
 one-confirmed = "One of you is in ({by}). Waiting on the other."
 locked = "Locked in: {start}. The calendar file is attached."
 room-open = "Starts in ten minutes. Your room: {link}"
-tz-changed-locked-call = "Your timezone changed and this call now falls outside your hours. Keep it, or suggest a new time?"
+tz-changed-locked-call = "Your timezone changed and this call at {time} now falls outside your hours. Keep it, or suggest a new time?"
 met-everyone = "You have met everyone here, so I am reconnecting the two of you."
 admin-pair-infeasible = "Those two have no available hours in common, so I will not pair them."
 `
@@ -348,7 +348,10 @@ describe('leg (b) [M2]: a tick introduces two strangers with a time on the table
     const posts = w.discord.postsIn(w.threadId)
     expect(posts.length).toBeGreaterThanOrEqual(2)
     expect(posts[0]!.content).toBe(renderCopy(w.cfg, 'introduction'))
-    expect(posts[1]!.content).toBe(renderCopy(w.cfg, 'proposal', { start: w.start }))
+    // M2: the slot is Discord <t:epoch:F> markup (spec, Timezones), not a raw millisecond.
+    expect(posts[1]!.content).toBe(renderCopy(w.cfg, 'proposal', { start: discordTime(w.start) }))
+    expect(posts[1]!.content).toContain(`<t:${Math.floor(w.start / 1000)}:F>`)
+    expect(posts[1]!.content).not.toContain(String(w.start))
     expect(buttonIds(posts[1]!).sort()).toEqual(
       [`confirm:${w.proposalId}`, `counter:${w.proposalId}`].sort(),
     )
@@ -390,7 +393,8 @@ describe('leg (c) [M3]: two confirmations lock the call', () => {
       .postsIn(w.threadId)
       .filter((m) => m.file !== undefined && m.file.name.endsWith('.ics'))
     expect(locked.length).toBe(1)
-    expect(locked[0]!.content).toBe(renderCopy(w.cfg, 'locked', { start: w.start }))
+    expect(locked[0]!.content).toBe(renderCopy(w.cfg, 'locked', { start: discordTime(w.start) }))
+    expect(locked[0]!.content).not.toContain(String(w.start))
 
     // M3: room-open, room-close and follow-up at Task 6's due times.
     const pending = w.storage.pendingJobs(GUILD).filter((j) => j.refId === w.pairing.id)
@@ -669,7 +673,10 @@ describe('leg (g) [M7]: pause, resume, forget, and a timezone that moves a call'
 
     const posts = w.discord.postsIn(w.threadId)
     expect(posts.length).toBe(before + 1)
-    expect(posts[posts.length - 1]!.content).toBe(renderCopy(w.cfg, 'tz-changed-locked-call'))
+    expect(posts[posts.length - 1]!.content).toBe(
+      renderCopy(w.cfg, 'tz-changed-locked-call', { time: discordTime(w.start) }),
+    )
+    expect(posts[posts.length - 1]!.content).not.toContain(String(w.start))
     expect(buttonIds(posts[posts.length - 1]!).sort()).toEqual(
       [`keepit:${w.pairing.id}`, `newtime:${w.pairing.id}`].sort(),
     )

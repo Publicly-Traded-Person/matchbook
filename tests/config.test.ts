@@ -4,7 +4,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { ConfigStore, CopyKey, GuildConfig } from '../src/types'
 import { loadConfig, parseConfig } from '../src/config/file-store'
-import { DEFAULT_COPY, renderCopy } from '../src/config/copy'
+import { DEFAULT_COPY, discordTime, renderCopy } from '../src/config/copy'
 
 /** The example config lives at the repo root, one level above tests/. */
 const EXAMPLE_PATH = `${import.meta.dir}/../config.example.toml`
@@ -242,6 +242,13 @@ describe('leg (d) [M4]: the six pinned substrings live in their named defaults',
 })
 
 // --------------------------------------------------------------- leg (e) --
+
+describe('discordTime: an instant as Discord <t:epoch:F> markup', () => {
+  test('a UTC millisecond becomes <t:seconds:F>, floored', () => {
+    expect(discordTime(1790467200000)).toBe('<t:1790467200:F>')
+    expect(discordTime(1790467200999)).toBe('<t:1790467200:F>')
+  })
+})
 
 describe('leg (e) [M5]: no forbidden character, substring or word in the copy or the example file', () => {
   const EM_DASH = '\u2014' // the em dash U+2014, written as an escape

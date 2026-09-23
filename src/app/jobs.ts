@@ -29,7 +29,7 @@ import {
   type SchedulingState,
 } from '../core/scheduling'
 import { compose, STRATEGIES } from '../core/strategies'
-import { renderCopy } from '../config/copy'
+import { discordTime, renderCopy } from '../config/copy'
 import { customId } from '../adapters/discord/components'
 import type { Scheduler } from '../jobs/scheduler'
 import type {
@@ -331,7 +331,8 @@ async function sayInThread(
 
 /**
  * `{start}` and `{time}` are the same instant under two names, so a server that
- * renamed the placeholder in its copy still gets the value.
+ * renamed the placeholder in its copy still gets the value. Both are rendered as
+ * Discord timestamp markup, never as the raw millisecond.
  */
 function copyVars(
   state: SchedulingState,
@@ -341,7 +342,11 @@ function copyVars(
   const standing = state.lockedStartUtc ?? state.proposedStartUtc
   if (standing !== null) vars.start = standing
   Object.assign(vars, effect.vars ?? {})
-  if (typeof vars.start === 'number') vars.time = vars.start
+  if (typeof vars.start === 'number') {
+    const shown = discordTime(vars.start)
+    vars.start = shown
+    vars.time = shown
+  }
   return vars
 }
 

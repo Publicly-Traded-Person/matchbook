@@ -23,7 +23,7 @@ import {
   recordEvidence,
   resumeMember,
 } from '../core/enrollment'
-import { renderCopy } from '../config/copy'
+import { discordTime, renderCopy } from '../config/copy'
 import {
   AVAILABILITY_DAYS_ID,
   AVAILABILITY_HOURS_ID,
@@ -147,8 +147,8 @@ async function handleTimezone(
     if (pairing.threadId === null) continue
     await rt.discord.post(cfg.guildId, pairing.threadId, {
       content: renderCopy(cfg, 'tz-changed-locked-call', {
-        start: locked.startUtc,
-        time: locked.startUtc,
+        start: discordTime(locked.startUtc),
+        time: discordTime(locked.startUtc),
       }),
       buttons: [
         { id: customId('keepit', pairing.id), label: 'Keep it', style: 'primary' },
