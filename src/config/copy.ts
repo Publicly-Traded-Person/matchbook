@@ -51,6 +51,11 @@ export const DEFAULT_COPY: Readonly<Record<CopyKey, string>> = Object.freeze({
   "released-limit":
     "You have each suggested a time and neither stuck, so I'm stepping back. The thread is yours to sort out.",
   "room-open": "Starts in ten minutes. Your room: {link}",
+  // Can't make it (#29). {who} is the display name of whoever tapped, {old} the
+  // time they are giving up, {start} the fresh one. The app prefixes the mentions.
+  declined: "{who} can't make {old}. How about {start}? Tap Works for me, or pick another time.",
+  "released-declines":
+    "You have each moved this once, so I'm stepping back. The thread is yours to sort out.",
   // The calendar file (#27). {a} and {b} are the two display names, read at lock.
   // The attachment is named after ics-summary, slugged.
   "ics-summary": "Matchbook: {a} and {b}",

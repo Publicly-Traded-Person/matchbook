@@ -243,6 +243,12 @@ ssh acorn 'cd ~/matchbook && git pull && /opt/homebrew/bin/bun install \
   && launchctl kickstart -k gui/501/com.kmikeym.matchbook'
 ```
 
+A post that predates a button (the first locked post of 2026-09-23 went out
+before Can't make it existed) is re-posted by hand through the bot's own port,
+once, with the pairing id read from `~/matchbook/data/matchbook.db`. That is the
+one time a locked post is repeated; the token stays in `.env` and the script is
+not committed.
+
 ## If something goes wrong
 
 | Symptom | Likely cause | Fix |

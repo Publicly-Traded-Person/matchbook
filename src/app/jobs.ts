@@ -252,6 +252,7 @@ export function readSchedulingState(rt: Runtime, pairing: PairingRecord): Schedu
     countersUsed,
     confirmedBy,
     lockedStartUtc: locked?.startUtc ?? null,
+    declinedBy: rt.storage.declinesOf(pairing.guildId, pairing.id).map((d) => d.memberId),
   }
 }
 
@@ -272,11 +273,15 @@ function buttonsFor(copy: CopyKey, pairingId: string, proposal: Proposal | null)
     case 'proposal':
     case 'counter':
     case 'one-confirmed':
+    case 'declined':
       if (proposal === null) return undefined
       return [
         { id: customId('confirm', proposal.id), label: 'Works for me', style: 'success' },
         { id: customId('counter', proposal.id), label: 'Pick another time', style: 'secondary' },
       ]
+    case 'locked':
+      // Can't make it (#29): either member, once each; the handler enforces the rest.
+      return [{ id: customId('decline', pairingId), label: "Can't make it", style: 'danger' }]
     case 'follow-up':
       return [
         { id: customId('yes', pairingId), label: 'Yes', style: 'success' },
@@ -326,6 +331,13 @@ async function pairNames(rt: Runtime, pairing: PairingRecord): Promise<{ a: stri
   }
 }
 
+/**
+ * Posts that wait on a member's answer open with both mentions (#32), added
+ * here rather than in the template so a server's own copy cannot lose them.
+ * For now only the cancellation; #32 widens the set.
+ */
+const MENTION_COPY: ReadonlySet<CopyKey> = new Set<CopyKey>(['declined'])
+
 /** Post one sentence of configured copy into a pairing's thread. */
 async function sayInThread(
   rt: Runtime,
@@ -336,7 +348,10 @@ async function sayInThread(
   extra?: Partial<OutgoingMessage>,
 ): Promise<void> {
   if (pairing.threadId === null) return
-  const message: OutgoingMessage = { content: renderCopy(cfg, copy, vars), ...extra }
+  const prefix = MENTION_COPY.has(copy)
+    ? pairing.members.map((m) => `<@${m}>`).join(' ') + ' '
+    : ''
+  const message: OutgoingMessage = { content: prefix + renderCopy(cfg, copy, vars), ...extra }
   await rt.discord.post(cfg.guildId, pairing.threadId, message)
 }
 
@@ -358,6 +373,7 @@ function copyVars(
     vars.start = shown
     vars.time = shown
   }
+  if (typeof vars.old === 'number') vars.old = discordTime(vars.old)
   return vars
 }
 
@@ -386,6 +402,10 @@ async function runEffects(
         break
       case 'say': {
         const vars = copyVars(next, effect)
+        // The machine names a member by id; people read a name (#27, #29).
+        if (typeof vars.who === 'string' && vars.who !== '') {
+          vars.who = await rt.discord.displayName(cfg.guildId, vars.who)
+        }
         const buttons = buttonsFor(effect.copy, pairingId, proposal)
         const file =
           effect.copy === 'locked' && next.lockedStartUtc !== null
@@ -408,7 +428,8 @@ function isProposing(event: SchedulingEvent): boolean {
   return (
     event.kind === 'propose' ||
     event.kind === 'counter' ||
-    (event.kind === 'tz-repropose' && event.startUtc !== null)
+    (event.kind === 'tz-repropose' && event.startUtc !== null) ||
+    (event.kind === 'decline' && event.startUtc !== null)
   )
 }
 
@@ -430,6 +451,17 @@ export async function applyEvent(
 
   const before = readSchedulingState(rt, pairing)
   const { next, effects } = transition(before, event, now, schedulingConfig(cfg))
+
+  // A decline the machine accepted spends that member's one move (#29). The
+  // both-spent release carries no new row: the tapping member's is already there.
+  if (event.kind === 'decline' && !before.declinedBy.includes(event.by)) {
+    rt.storage.insertDecline({
+      guildId: cfg.guildId,
+      pairingId,
+      memberId: event.by,
+      declinedAt: now,
+    })
+  }
 
   const open = openProposal(rt, pairing)
   let current: Proposal | null = open

@@ -78,6 +78,8 @@ const ALL_COPY_KEYS: readonly CopyKey[] = [
   'admin-pair-infeasible',
   'ics-summary',
   'ics-description',
+  'declined',
+  'released-declines',
 ]
 
 // --------------------------------------------------------------- leg (a) --
@@ -256,6 +258,19 @@ describe('ics copy: the calendar file names the two people', () => {
   test('a server override with its own wording renders as given', () => {
     const cfg = { copy: { 'ics-summary': 'Shareholder Match: {a} <> {b}' } }
     expect(renderCopy(cfg, 'ics-summary', { a: 'Mike', b: 'Drew' })).toBe('Shareholder Match: Mike <> Drew')
+  })
+})
+
+describe("Can't make it copy (#29, Task 3 leg f)", () => {
+  test('declined carries the three placeholders and released-declines is set', () => {
+    expect(ALL_COPY_KEYS).toContain('declined')
+    expect(ALL_COPY_KEYS).toContain('released-declines')
+    for (const p of ['{who}', '{old}', '{start}']) expect(DEFAULT_COPY.declined).toContain(p)
+    expect(DEFAULT_COPY['released-declines'].trim().length).toBeGreaterThan(0)
+    const out = renderCopy({ copy: {} }, 'declined', { who: 'Mike', old: 'X', start: 'Y' })
+    expect(out).toContain('Mike')
+    expect(out).toContain('X')
+    expect(out).toContain('Y')
   })
 })
 

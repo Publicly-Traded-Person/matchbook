@@ -11,6 +11,7 @@ import { describe, expect, test } from "bun:test"
 import { SCHEMA_SQL, openStorage } from "../src/storage/sqlite"
 import type {
   Confirmation,
+  Decline,
   Job,
   MemberRow,
   Outcome,
@@ -123,9 +124,10 @@ const ids = (rows: readonly { id: string }[]) => rows.map((r) => r.id)
 
 // ------------------------------------------------- M1 / Proof leg (a) --
 
-/** The eight tables of §6, sorted. */
+/** The eight tables of §6 plus `declines` (#29), sorted. */
 const TABLES = [
   "confirmations",
+  "declines",
   "guilds",
   "jobs",
   "members",
@@ -169,12 +171,13 @@ const COLUMNS: Record<string, readonly string[]> = {
     "created_at",
   ],
   confirmations: ["guild_id", "proposal_id", "discord_user_id", "confirmed_at"],
+  declines: ["guild_id", "pairing_id", "discord_user_id", "declined_at"],
   outcomes: ["guild_id", "pairing_id", "discord_user_id", "connected", "answered_at"],
   jobs: ["id", "guild_id", "kind", "ref_id", "run_at", "state", "created_at"],
 }
 
-describe("M1: openStorage(':memory:') builds the eight guild-scoped tables", () => {
-  test("leg (a): the sorted table names from sqlite_master are exactly the eight", () => {
+describe("M1: openStorage(':memory:') builds the nine guild-scoped tables", () => {
+  test("leg (a): the sorted table names from sqlite_master are exactly the nine", () => {
     const storage = open()
     const names = rawRows(storage, "SELECT name FROM sqlite_master WHERE type = 'table'")
       .map((r) => String(r.name))
@@ -182,7 +185,7 @@ describe("M1: openStorage(':memory:') builds the eight guild-scoped tables", () 
     expect(names).toEqual(TABLES)
   })
 
-  test("leg (a): PRAGMA table_info lists a guild_id column on each of the eight", () => {
+  test("leg (a): PRAGMA table_info lists a guild_id column on each of the nine", () => {
     const storage = open()
     for (const table of TABLES) {
       expect(columnsOf(storage, table)).toContain("guild_id")
@@ -199,9 +202,9 @@ describe("M1: openStorage(':memory:') builds the eight guild-scoped tables", () 
     }
   })
 
-  test("leg (a): SCHEMA_SQL is the eight CREATE TABLE IF NOT EXISTS statements, in order", () => {
+  test("leg (a): SCHEMA_SQL is the nine CREATE TABLE IF NOT EXISTS statements, in order", () => {
     expect(Array.isArray(SCHEMA_SQL)).toBe(true)
-    expect(SCHEMA_SQL.length).toBe(8)
+    expect(SCHEMA_SQL.length).toBe(9)
     for (const statement of SCHEMA_SQL) {
       expect(statement).toMatch(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS/i)
     }
@@ -610,5 +613,44 @@ describe("M7: the SQL stays generic", () => {
     for (const pragma of pragmas) {
       expect(["foreign_keys", "journal_mode"]).toContain(pragma)
     }
+  })
+})
+
+// ------------------------------------------------- declines (#29, Task 1) --
+
+describe("declines: once per member per pairing, kept across restarts, gone on /forget", () => {
+  const d1: Decline = { guildId: "g1", pairingId: "pr-p1", memberId: "m1", declinedAt: 9_000 }
+  const d2: Decline = { guildId: "g1", pairingId: "pr-p1", memberId: "m2", declinedAt: 9_500 }
+
+  test("leg (a): the declines table has its four columns in order", () => {
+    const storage = open()
+    expect(columnsOf(storage, "declines")).toEqual([
+      "guild_id",
+      "pairing_id",
+      "discord_user_id",
+      "declined_at",
+    ])
+  })
+
+  test("leg (b): a decline reads back whole and only for its own pairing and guild", () => {
+    const storage = open("g1")
+    storage.insertDecline(d1)
+    expect(storage.declinesOf("g1", "pr-p1")).toEqual([d1])
+    expect(storage.declinesOf("g1", "other")).toEqual([])
+    expect(storage.declinesOf("g2", "pr-p1")).toEqual([])
+  })
+
+  test("leg (c): the same member declining the same pairing twice throws", () => {
+    const storage = open("g1")
+    storage.insertDecline(d1)
+    expect(() => storage.insertDecline({ ...d1, declinedAt: 9_999 })).toThrow()
+  })
+
+  test("leg (d): forgetMember deletes that member's declines and leaves the partner's", () => {
+    const storage = open("g1")
+    storage.insertDecline(d1)
+    storage.insertDecline(d2)
+    storage.forgetMember("g1", "m1")
+    expect(storage.declinesOf("g1", "pr-p1")).toEqual([d2])
   })
 })

@@ -14,6 +14,7 @@ import { Database } from 'bun:sqlite'
 import type {
   AvailabilityPreset,
   Confirmation,
+  Decline,
   GuildId,
   Job,
   JobKind,
@@ -88,6 +89,13 @@ export const SCHEMA_SQL: readonly string[] = [
     discord_user_id TEXT NOT NULL,
     confirmed_at INTEGER NOT NULL,
     PRIMARY KEY (guild_id, proposal_id, discord_user_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS declines (
+    guild_id TEXT NOT NULL,
+    pairing_id TEXT NOT NULL,
+    discord_user_id TEXT NOT NULL,
+    declined_at INTEGER NOT NULL,
+    PRIMARY KEY (guild_id, pairing_id, discord_user_id)
   )`,
   `CREATE TABLE IF NOT EXISTS outcomes (
     guild_id TEXT NOT NULL,
@@ -174,6 +182,13 @@ interface ConfirmationRaw {
   confirmed_at: number
 }
 
+interface DeclineRaw {
+  guild_id: string
+  pairing_id: string
+  discord_user_id: string
+  declined_at: number
+}
+
 interface OutcomeRaw {
   guild_id: string
   pairing_id: string
@@ -246,6 +261,13 @@ const toConfirmation = (r: ConfirmationRaw): Confirmation => ({
   proposalId: r.proposal_id,
   memberId: r.discord_user_id,
   confirmedAt: r.confirmed_at,
+})
+
+const toDecline = (r: DeclineRaw): Decline => ({
+  guildId: r.guild_id,
+  pairingId: r.pairing_id,
+  memberId: r.discord_user_id,
+  declinedAt: r.declined_at,
 })
 
 const toOutcome = (r: OutcomeRaw): Outcome => ({
@@ -569,6 +591,29 @@ export function openStorage(path: string): SqliteStorage {
       ).map(toConfirmation)
     },
 
+    // A plain INSERT on purpose: the primary key is the once-per-member rule (#29).
+    insertDecline(d) {
+      run(
+        `INSERT INTO declines (guild_id, pairing_id, discord_user_id, declined_at)
+         VALUES (?, ?, ?, ?)`,
+        d.guildId,
+        d.pairingId,
+        d.memberId,
+        d.declinedAt,
+      )
+    },
+
+    declinesOf(guildId, pairingId) {
+      return all<DeclineRaw>(
+        `SELECT guild_id, pairing_id, discord_user_id, declined_at
+           FROM declines
+          WHERE guild_id = ? AND pairing_id = ?
+          ORDER BY rowid`,
+        guildId,
+        pairingId,
+      ).map(toDecline)
+    },
+
     insertOutcome(o) {
       run(
         `INSERT INTO outcomes (guild_id, pairing_id, discord_user_id, connected, answered_at)
@@ -611,6 +656,7 @@ export function openStorage(path: string): SqliteStorage {
       db.transaction(() => {
         run('DELETE FROM pairing_members WHERE guild_id = ? AND discord_user_id = ?', guildId, id)
         run('DELETE FROM confirmations WHERE guild_id = ? AND discord_user_id = ?', guildId, id)
+        run('DELETE FROM declines WHERE guild_id = ? AND discord_user_id = ?', guildId, id)
         run('DELETE FROM outcomes WHERE guild_id = ? AND discord_user_id = ?', guildId, id)
         run('DELETE FROM members WHERE guild_id = ? AND discord_user_id = ?', guildId, id)
         run(
