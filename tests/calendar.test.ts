@@ -10,6 +10,7 @@ import {
   alternatives,
   formatIcsTime,
   ics,
+  icsFileName,
   proposeSlots,
 } from "../src/core/calendar"
 import type { IcsEvent, SlotOptions } from "../src/core/calendar"
@@ -262,5 +263,17 @@ describe("leg (f) [M6] formatIcsTime", () => {
     expect(formatIcsTime(Date.UTC(2026, 8, 17, 19, 0, 0))).toBe(
       "20260917T190000Z",
     )
+  })
+})
+
+describe("icsFileName: the summary, slugged, as the attachment name", () => {
+  test("lowercases, folds punctuation and spaces into single hyphens, trims the ends", () => {
+    expect(icsFileName("Shareholder Match: Mike <> Drew")).toBe("shareholder-match-mike-drew.ics")
+    expect(icsFileName("Matchbook: Alice and Bob")).toBe("matchbook-alice-and-bob.ics")
+  })
+
+  test("an empty or all-punctuation summary still yields a usable name", () => {
+    expect(icsFileName("")).toBe("matchbook.ics")
+    expect(icsFileName("<>")).toBe("matchbook.ics")
   })
 })

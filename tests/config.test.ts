@@ -76,6 +76,8 @@ const ALL_COPY_KEYS: readonly CopyKey[] = [
   'availability-saved',
   'admin-status',
   'admin-pair-infeasible',
+  'ics-summary',
+  'ics-description',
 ]
 
 // --------------------------------------------------------------- leg (a) --
@@ -242,6 +244,20 @@ describe('leg (d) [M4]: the six pinned substrings live in their named defaults',
 })
 
 // --------------------------------------------------------------- leg (e) --
+
+describe('ics copy: the calendar file names the two people', () => {
+  test('ics-summary and ics-description take {a} and {b}', () => {
+    const cfg = { copy: {} }
+    expect(renderCopy(cfg, 'ics-summary', { a: 'Mike', b: 'Drew' })).toContain('Mike')
+    expect(renderCopy(cfg, 'ics-summary', { a: 'Mike', b: 'Drew' })).toContain('Drew')
+    expect(renderCopy(cfg, 'ics-description', { a: 'Mike', b: 'Drew' })).toContain('Drew')
+  })
+
+  test('a server override with its own wording renders as given', () => {
+    const cfg = { copy: { 'ics-summary': 'Shareholder Match: {a} <> {b}' } }
+    expect(renderCopy(cfg, 'ics-summary', { a: 'Mike', b: 'Drew' })).toBe('Shareholder Match: Mike <> Drew')
+  })
+})
 
 describe('discordTime: an instant as Discord <t:epoch:F> markup', () => {
   test('a UTC millisecond becomes <t:seconds:F>, floored', () => {

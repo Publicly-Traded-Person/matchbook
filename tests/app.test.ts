@@ -157,6 +157,10 @@ class Recorder implements DiscordPort {
     this.calls.push({ method: 'deleteChannel', args: [guildId, channelId], result: undefined })
   }
 
+  async displayName(guildId: GuildId, memberId: MemberId): Promise<string> {
+    return this.inner.displayName(guildId, memberId)
+  }
+
   of(method: CallName): Call[] {
     return this.calls.filter((c) => c.method === method)
   }
@@ -395,6 +399,15 @@ describe('leg (c) [M3]: two confirmations lock the call', () => {
     expect(locked.length).toBe(1)
     expect(locked[0]!.content).toBe(renderCopy(w.cfg, 'locked', { start: discordTime(w.start) }))
     expect(locked[0]!.content).not.toContain(String(w.start))
+
+    // The file is named for the two people, not the pairing id, and the event text
+    // carries their display names (decision issue: the .ics names the two people).
+    const file = locked[0]!.file!
+    expect(file.name).toBe('matchbook-member-u1-and-member-u2.ics')
+    expect(file.name).not.toContain(w.pairing.id)
+    const text = new TextDecoder().decode(file.bytes)
+    expect(text).toContain('SUMMARY:Matchbook: Member u1 and Member u2')
+    expect(text).toMatch(/DESCRIPTION:.*Member u1.*Member u2/)
 
     // M3: room-open, room-close and follow-up at Task 6's due times.
     const pending = w.storage.pendingJobs(GUILD).filter((j) => j.refId === w.pairing.id)

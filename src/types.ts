@@ -270,6 +270,8 @@ export type CopyKey =
   | 'availability-saved'
   | 'admin-status'
   | 'admin-pair-infeasible'
+  | 'ics-summary'
+  | 'ics-description'
 
 export interface ConfigStore {
   get(guildId: GuildId): GuildConfig | null
@@ -317,6 +319,8 @@ export interface DiscordPort {
   /** View Channel and Connect for `members` are set in the create call itself (#14). */
   createVoiceChannel(guildId: GuildId, categoryId: string, name: string, members: readonly MemberId[]): Promise<{ id: string; url: string }>
   deleteChannel(guildId: GuildId, channelId: string): Promise<void>
+  /** The member's display name in this guild, read once and never stored; the id when unknown (#27). */
+  displayName(guildId: GuildId, memberId: MemberId): Promise<string>
 }
 
 // ---------------------------------------------------------- app port (§7) --

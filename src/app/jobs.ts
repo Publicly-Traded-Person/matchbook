@@ -10,7 +10,7 @@
 // the pure state machine, and the machine's effects are carried out here.
 
 import { feasible, sharedHours } from '../core/availability'
-import { ics, proposeSlots } from '../core/calendar'
+import { ics, icsFileName, proposeSlots } from '../core/calendar'
 import {
   closePairing,
   expireCheckin,
@@ -302,17 +302,28 @@ export function icsAttachment(
   startUtc: number,
   cfg: GuildConfig,
   now: number,
+  names: { a: string; b: string },
 ): { name: string; bytes: Uint8Array } {
+  const summary = renderCopy(cfg, 'ics-summary', names)
   const text = ics({
     uid: `${pairing.id}@matchbook`,
     dtstamp: now,
     startUtc,
     durationMin: cfg.callMinutes,
-    summary: 'Matchbook call',
-    description: 'Your Matchbook call',
+    summary,
+    description: renderCopy(cfg, 'ics-description', names),
     threadUrl: pairing.threadId === null ? '' : threadUrl(pairing.guildId, pairing.threadId),
   })
-  return { name: `${pairing.id}.ics`, bytes: new TextEncoder().encode(text) }
+  return { name: icsFileName(summary), bytes: new TextEncoder().encode(text) }
+}
+
+/** The two display names, read from Discord now and kept nowhere (#27). */
+async function pairNames(rt: Runtime, pairing: PairingRecord): Promise<{ a: string; b: string }> {
+  const [a, b] = pairing.members
+  return {
+    a: a === undefined ? '' : await rt.discord.displayName(pairing.guildId, a),
+    b: b === undefined ? '' : await rt.discord.displayName(pairing.guildId, b),
+  }
 }
 
 /** Post one sentence of configured copy into a pairing's thread. */
@@ -378,7 +389,7 @@ async function runEffects(
         const buttons = buttonsFor(effect.copy, pairingId, proposal)
         const file =
           effect.copy === 'locked' && next.lockedStartUtc !== null
-            ? icsAttachment(pairing, next.lockedStartUtc, cfg, now)
+            ? icsAttachment(pairing, next.lockedStartUtc, cfg, now, await pairNames(rt, pairing))
             : undefined
         await sayInThread(rt, cfg, pairing, effect.copy, vars, {
           ...(buttons === undefined ? {} : { buttons }),

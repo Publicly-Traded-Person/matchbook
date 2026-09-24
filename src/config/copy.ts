@@ -51,6 +51,11 @@ export const DEFAULT_COPY: Readonly<Record<CopyKey, string>> = Object.freeze({
   "released-limit":
     "You have each suggested a time and neither stuck, so I'm stepping back. The thread is yours to sort out.",
   "room-open": "Starts in ten minutes. Your room: {link}",
+  // The calendar file (#27). {a} and {b} are the two display names, read at lock.
+  // The attachment is named after ics-summary, slugged.
+  "ics-summary": "Matchbook: {a} and {b}",
+  "ics-description":
+    "A Matchbook call between {a} and {b}. The room link is posted in your thread ten minutes before the start.",
 
   // --------------------------------------------- follow-up and hygiene (§4a) --
 

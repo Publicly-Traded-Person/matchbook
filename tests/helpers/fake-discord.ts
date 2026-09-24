@@ -136,6 +136,11 @@ export class FakeDiscord implements DiscordPort {
     this.calls.push({ kind: 'deleteChannel', guildId, channelId })
   }
 
+  /** A stable readable name per id, so tests can tell a name from an id. */
+  async displayName(_guildId: GuildId, memberId: MemberId): Promise<string> {
+    return `Member ${memberId}`
+  }
+
   // ------------------------------------------------------------- queries --
 
   /** Every recorded call of one kind, narrowed to that kind's shape. */
