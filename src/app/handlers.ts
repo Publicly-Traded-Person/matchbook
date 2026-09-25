@@ -414,6 +414,47 @@ async function handleNewTime(
   return ephemeral(NOTED)
 }
 
+/** The room opens this long before the call (ROOM_OPEN_LEAD_MS in core/scheduling). */
+const ROOM_LEAD_MS = 600_000
+
+const CALL_STARTED = "That one's started; tell me on the follow-up instead."
+const DECLINED_ONCE =
+  'You have already moved this call once. If the other side cannot make it either, the button is theirs.'
+
+/**
+ * Can't make it (#29). Either member of a locked call, once each, while the
+ * room is not yet open. Runs the same re-propose path a timezone change does.
+ */
+async function handleDecline(
+  rt: Runtime,
+  cfg: GuildConfig,
+  userId: MemberId,
+  pairingId: string,
+  now: number,
+): Promise<Reply> {
+  const pairing = rt.storage.getPairing(cfg.guildId, pairingId)
+  if (pairing === null || !pairing.members.includes(userId) || pairing.state !== 'locked') {
+    return ephemeral(NOTHING_TO_ANSWER)
+  }
+  const locked = lockedProposal(rt, pairing)
+  if (locked === null) return ephemeral(NOTHING_TO_ANSWER)
+  if (now >= locked.startUtc - ROOM_LEAD_MS) return ephemeral(CALL_STARTED)
+
+  const declined = rt.storage.declinesOf(cfg.guildId, pairingId).map((d) => d.memberId)
+  const other = pairing.members.find((m) => m !== userId)
+  if (declined.includes(userId) && !(other !== undefined && declined.includes(other))) {
+    return ephemeral(DECLINED_ONCE)
+  }
+
+  const a = rt.storage.getMember(cfg.guildId, pairing.members[0])
+  const b = rt.storage.getMember(cfg.guildId, pairing.members[1])
+  if (a === null || b === null) return ephemeral(NOTHING_TO_ANSWER)
+
+  const startUtc = slotsFor(a, b, now)[0] ?? null
+  await applyEvent(rt, cfg, pairingId, { kind: 'decline', by: userId, startUtc }, now)
+  return ephemeral(NOTED)
+}
+
 /** A preset button, or Clear. Both rewrite the whole mask, which is the point. */
 function handleAvailabilityPreset(
   rt: Runtime,
@@ -462,6 +503,8 @@ async function handleButton(
       return ephemeral(NOTED)
     case 'newtime':
       return handleNewTime(rt, cfg, userId, ref, now)
+    case 'decline':
+      return handleDecline(rt, cfg, userId, ref, now)
     case 'avail':
       return handleAvailabilityPreset(rt, cfg, userId, ref)
     default:

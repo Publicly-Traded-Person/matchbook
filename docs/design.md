@@ -512,6 +512,17 @@ accurate than any stored pattern and it never goes stale, but it replaces one ta
 with six on every single pairing, which reintroduces exactly the coordination
 burden this feature exists to remove. A standing weekly mask is answered once.
 
+**Can't make it (#29).** The one other thing that rewrites a locked call is a
+member saying they cannot make it. The locked post carries a `Can't make it`
+button, and either member may use it once per pairing: the bot cancels the room
+and the follow-up, proposes the next hour that fits both masks at least three
+days out, and the negotiation clock restarts, exactly as after a timezone
+change. A third tap, after both have used theirs, releases the pairing to the
+thread. The button is dead once the room is open or the call has passed; a
+missed call is the follow-up's to record. The post that announces it mentions
+both members (#32) and names who tapped, with the old time and the new one. A
+cancellation calendar file waits on #33.
+
 **On lock (#14):** generate and post an .ics: a single `VEVENT` with `UID`,
 `DTSTAMP`, `DTSTART`, `DTEND` (all UTC), `SUMMARY`, `DESCRIPTION`, and
 `LOCATION` set to the pairing's thread URL, which is where the room link will

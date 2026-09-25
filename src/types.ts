@@ -98,6 +98,14 @@ export interface Confirmation {
   readonly confirmedAt: number
 }
 
+/** One Can't make it tap (#29): each member gets one per pairing, kept so a restart cannot hand out a second. */
+export interface Decline {
+  readonly guildId: GuildId
+  readonly pairingId: string
+  readonly memberId: MemberId
+  readonly declinedAt: number
+}
+
 export interface Outcome {
   readonly guildId: GuildId
   readonly pairingId: string
@@ -212,13 +220,17 @@ export interface Storage extends JobStore {
   insertConfirmation(c: Confirmation): void
   confirmationsOf(guildId: GuildId, proposalId: string): Confirmation[]
 
+  /** Throws on a second decline by the same member of the same pairing (#29). */
+  insertDecline(d: Decline): void
+  declinesOf(guildId: GuildId, pairingId: string): Decline[]
+
   insertOutcome(o: Outcome): void
   outcomesOf(guildId: GuildId, pairingId: string): Outcome[]
   allOutcomes(guildId: GuildId): Outcome[]
 
   /**
-   * /forget: delete the member row, their pairing memberships, confirmations
-   * and outcomes; null proposedBy on proposals they authored. Partners' rows
+   * /forget: delete the member row, their pairing memberships, confirmations,
+   * declines and outcomes; null proposedBy on proposals they authored. Partners' rows
    * are untouched (§9).
    */
   forgetMember(guildId: GuildId, id: MemberId): void
@@ -272,6 +284,8 @@ export type CopyKey =
   | 'admin-pair-infeasible'
   | 'ics-summary'
   | 'ics-description'
+  | 'declined'
+  | 'released-declines'
 
 export interface ConfigStore {
   get(guildId: GuildId): GuildConfig | null

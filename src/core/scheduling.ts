@@ -25,6 +25,8 @@ export type SchedulingState = {
   countersUsed: Readonly<Record<MemberId, number>>
   confirmedBy: readonly MemberId[]
   lockedStartUtc: number | null
+  /** Who has already used their one Can't make it on this pairing (#29). */
+  declinedBy: readonly MemberId[]
 }
 
 export type SchedulingEvent =
@@ -38,6 +40,8 @@ export type SchedulingEvent =
   | { kind: 'follow-up-due' }
   | { kind: 'release-review'; hadActivity: boolean }
   | { kind: 'archive' }
+  /** Can't make it on a locked call (#29): a new time, or null when none is left. */
+  | { kind: 'decline'; by: MemberId; startUtc: number | null }
 
 export type SchedulingConfig = {
   negotiationTimeoutMs: number
@@ -81,6 +85,7 @@ export function initialState(members: readonly [MemberId, MemberId]): Scheduling
     countersUsed: {},
     confirmedBy: [],
     lockedStartUtc: null,
+    declinedBy: [],
   }
 }
 
@@ -145,6 +150,8 @@ export function transition(
             : repropose(s, ev.startUtc, now, cfg)
         case 'follow-up-due':
           return enterCompleted(s, now)
+        case 'decline':
+          return decline(s, ev.by, ev.startUtc, now, cfg)
       }
       break
 
@@ -256,12 +263,43 @@ function counter(
   return enterProposed(spent, startUtc, by, 'counter', now, cfg)
 }
 
-/** A timezone change moved a locked call: back to negotiation, both sides fresh. */
+/**
+ * Can't make it (#29). Each member gets one per pairing. A fresh member reopens
+ * the negotiation exactly as a timezone change does, naming who and the old
+ * time; a spent member is refused while the other still has a move, and once
+ * both are spent a further tap releases the pairing to the thread.
+ */
+function decline(
+  s: SchedulingState,
+  by: MemberId,
+  startUtc: number | null,
+  now: number,
+  cfg: SchedulingConfig,
+): Outcome {
+  if (s.declinedBy.includes(by)) {
+    const other = s.members.find((m) => m !== by)
+    if (other !== undefined && s.declinedBy.includes(other)) {
+      return enterReleased(s, 'released-declines', now)
+    }
+    throw new IllegalTransition(`${by} has already declined once`)
+  }
+  const spent: SchedulingState = { ...s, declinedBy: [...s.declinedBy, by] }
+  if (startUtc === null) return enterReleased(spent, 'released-overlap', now)
+  return repropose(spent, startUtc, now, cfg, 'declined', {
+    who: by,
+    old: s.lockedStartUtc ?? 0,
+    start: startUtc,
+  })
+}
+
+/** A timezone change (or a decline) moved a locked call: back to negotiation, both sides fresh. */
 function repropose(
   s: SchedulingState,
   startUtc: number,
   now: number,
   cfg: SchedulingConfig,
+  copy: CopyKey = 'proposal',
+  vars: Readonly<Record<string, string | number>> = { start: startUtc },
 ): Outcome {
   return {
     next: {
@@ -276,7 +314,7 @@ function repropose(
     effects: [
       ...CALL_JOBS.map(cancel),
       schedule('negotiation-release', now + cfg.negotiationTimeoutMs),
-      say('proposal', { start: startUtc }),
+      say(copy, vars),
     ],
   }
 }

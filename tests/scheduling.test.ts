@@ -58,6 +58,7 @@ const ALL_KINDS: readonly SchedulingEvent["kind"][] = [
   "follow-up-due",
   "release-review",
   "archive",
+  "decline",
 ]
 
 function stateOf(over: Partial<SchedulingState> & { state: PairingState }): SchedulingState {
@@ -68,6 +69,7 @@ function stateOf(over: Partial<SchedulingState> & { state: PairingState }): Sche
     countersUsed: {},
     confirmedBy: [],
     lockedStartUtc: null,
+    declinedBy: [],
     ...over,
   }
 }
@@ -135,6 +137,12 @@ function eventsFor(kind: SchedulingEvent["kind"], s: SchedulingState): readonly 
       ]
     case "archive":
       return [{ kind: "archive" }]
+    case "decline":
+      // A member who has not declined yet, with a time and with none left (#29).
+      return [
+        { kind: "decline", by: s.members.find((m) => !s.declinedBy.includes(m)) ?? A, startUtc: TZ_START },
+        { kind: "decline", by: s.members.find((m) => !s.declinedBy.includes(m)) ?? A, startUtc: null },
+      ]
   }
 }
 
@@ -152,6 +160,7 @@ const M1: Readonly<Record<string, (ev: SchedulingEvent) => PairingState>> = {
   "locked:tz-repropose": (ev) =>
     ev.kind === "tz-repropose" && ev.startUtc !== null ? "time_proposed" : "released",
   "locked:follow-up-due": () => "completed",
+  "locked:decline": (ev) => (ev.kind === "decline" && ev.startUtc !== null ? "time_proposed" : "released"),
   "released:release-review": (ev) =>
     ev.kind === "release-review" && ev.hadActivity ? "completed" : "expired",
   "completed:archive": () => "completed",
@@ -171,6 +180,7 @@ function outcomeLabel(s: SchedulingState, ev: SchedulingEvent): string {
 function rowLabel(kind: SchedulingEvent["kind"], ev: SchedulingEvent): string {
   if (ev.kind === "tz-repropose") return `${kind}(startUtc=${ev.startUtc === null ? "null" : "set"})`
   if (ev.kind === "release-review") return `${kind}(hadActivity=${ev.hadActivity})`
+  if (ev.kind === "decline") return `${kind}(startUtc=${ev.startUtc === null ? "null" : "set"})`
   return kind
 }
 
@@ -213,9 +223,9 @@ function expectSay(fx: readonly Effect[], copy: CopyKey, vars: Record<string, st
 // ------------------------------------------------------------ the legs --
 
 describe("leg (a): the whole transition table [M1]", () => {
-  test("all 63 (state, event.kind) combinations land on M1's target or throw IllegalTransition", () => {
+  test("all 70 (state, event.kind) combinations land on M1's target or throw IllegalTransition", () => {
     expect(ALL_STATES.length).toBe(7)
-    expect(ALL_KINDS.length).toBe(9)
+    expect(ALL_KINDS.length).toBe(10)
 
     const observedLegal: string[] = []
     let combinations = 0
@@ -241,9 +251,9 @@ describe("leg (a): the whole transition table [M1]", () => {
       }
     }
 
-    expect(combinations).toBe(63)
-    // The count of legal combinations found is exactly 13.
-    expect(observedLegal.length).toBe(13)
+    expect(combinations).toBe(70)
+    // The count of legal combinations found is exactly 14 (13 at build 1, plus locked:decline).
+    expect(observedLegal.length).toBe(14)
     expect(observedLegal.slice().sort()).toEqual(Object.keys(M1).slice().sort())
   })
 
@@ -262,6 +272,7 @@ describe("leg (a): the whole transition table [M1]", () => {
       countersUsed: {},
       confirmedBy: [],
       lockedStartUtc: null,
+      declinedBy: [],
     })
   })
 })
@@ -530,5 +541,61 @@ describe("say copy keys and their vars", () => {
   test("the locking confirm says `locked` with the locked start", () => {
     const { effects } = transition(REPS.one_confirmed, { kind: "confirm", by: B }, NOW, CFG)
     expectSay(effects, "locked", { start: START })
+  })
+})
+
+// ------------------------------------------ leg (h): Can't make it (#29, Task 2) --
+
+describe("leg (h): a decline moves a locked call once per member [M2..M5]", () => {
+  const LOCKED = REPS.locked
+
+  test("(b) a fresh member with a time: back to time_proposed, jobs cancelled, declined said [M2]", () => {
+    const { next, effects } = transition(LOCKED, { kind: "decline", by: A, startUtc: TZ_START }, NOW, CFG)
+    expect(next.state).toBe("time_proposed")
+    expect(next.proposedStartUtc).toBe(TZ_START)
+    expect(next.proposedBy).toBeNull()
+    expect(next.confirmedBy).toEqual([])
+    expect(next.countersUsed).toEqual({})
+    expect(next.lockedStartUtc).toBeNull()
+    expect(next.declinedBy).toEqual([A])
+    expect(effects).toEqual([
+      { type: "cancel", kind: "room-open" },
+      { type: "cancel", kind: "room-close" },
+      { type: "cancel", kind: "follow-up" },
+      { type: "schedule", kind: "negotiation-release", runAt: NOW + CFG.negotiationTimeoutMs },
+      { type: "say", copy: "declined", vars: { who: A, old: START, start: TZ_START } },
+    ])
+  })
+
+  test("(c) a fresh member with no time left: released, released-overlap said [M3]", () => {
+    const { next, effects } = transition(LOCKED, { kind: "decline", by: A, startUtc: null }, NOW, CFG)
+    expect(next.state).toBe("released")
+    expect(next.lockedStartUtc).toBeNull()
+    expect(onlySay(effects).copy).toBe("released-overlap")
+    cancelIndex(effects, "room-open")
+    cancelIndex(effects, "room-close")
+    cancelIndex(effects, "follow-up")
+    scheduleIndex(effects, "expire", NOW + SEVEN_DAYS)
+  })
+
+  test("(d) a spent member: released when both are spent, IllegalTransition when only they are [M4]", () => {
+    const bothSpent = stateOf({ ...LOCKED, declinedBy: [A, B] })
+    const { next, effects } = transition(bothSpent, { kind: "decline", by: A, startUtc: TZ_START }, NOW, CFG)
+    expect(next.state).toBe("released")
+    expect(onlySay(effects).copy).toBe("released-declines")
+
+    const oneSpent = stateOf({ ...LOCKED, declinedBy: [A] })
+    expect(() => transition(oneSpent, { kind: "decline", by: A, startUtc: TZ_START }, NOW, CFG)).toThrow(
+      IllegalTransition,
+    )
+  })
+
+  test("(e) declinedBy survives the re-lock [M5]", () => {
+    const declined = transition(LOCKED, { kind: "decline", by: A, startUtc: TZ_START }, NOW, CFG).next
+    const one = transition(declined, { kind: "confirm", by: A }, NOW, CFG).next
+    const relocked = transition(one, { kind: "confirm", by: B }, NOW, CFG).next
+    expect(relocked.state).toBe("locked")
+    expect(relocked.lockedStartUtc).toBe(TZ_START)
+    expect(relocked.declinedBy).toEqual([A])
   })
 })

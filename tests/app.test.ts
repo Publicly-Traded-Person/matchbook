@@ -799,3 +799,129 @@ describe('leg (j) [M10]: the two default masks are the same string', () => {
     expect(DEFAULT_MASK).toBe(DEFAULT_MASK_LITERAL)
   })
 })
+
+// ------------------------------------------------- leg (i) [#29]: Can't make it --
+
+const STALE_BUTTON = 'That is not on the table any more, so there is nothing to answer.'
+
+describe("leg (i) [#29]: Can't make it on a locked call", () => {
+  const tap = (w: Awaited<ReturnType<typeof lockedWorld>>, userId: string, at: number) =>
+    w.app.handle(
+      { kind: 'button', guildId: GUILD, userId, customId: `decline:${w.pairing.id}`, channelId: w.threadId },
+      at,
+    )
+  const openProposal = (w: Awaited<ReturnType<typeof lockedWorld>>) =>
+    w.storage.proposalsOf(GUILD, w.pairing.id).find((p) => p.state === 'open')
+  const relock = async (w: Awaited<ReturnType<typeof lockedWorld>>, at: number) => {
+    const open = must(openProposal(w), 'an open proposal to re-lock')
+    for (const userId of ['u1', 'u2'] as const) {
+      await w.app.handle(
+        { kind: 'button', guildId: GUILD, userId, customId: `confirm:${open.id}`, channelId: w.threadId },
+        at,
+      )
+    }
+    expect(must(w.storage.getPairing(GUILD, w.pairing.id), 'pairing').state).toBe('locked')
+    return open.startUtc
+  }
+  const mentions = (w: Awaited<ReturnType<typeof lockedWorld>>) =>
+    w.pairing.members.map((m) => `<@${m}>`).join(' ') + ' '
+
+  test('(a) the locked post carries exactly the Can\'t make it button, beside its file [M1]', async () => {
+    const w = await lockedWorld()
+    const locked = w.discord.postsIn(w.threadId).filter((m) => m.file !== undefined)
+    expect(locked.length).toBe(1)
+    expect(buttonIds(locked[0]!)).toEqual([`decline:${w.pairing.id}`])
+    expect(locked[0]!.buttons![0]!.label).toBe("Can't make it")
+    expect(locked[0]!.buttons![0]!.style).toBe('danger')
+  })
+
+  test('(b) a fresh tap days out: row, re-proposal, jobs swapped, a mentioned post [M2]', async () => {
+    const w = await lockedWorld()
+    const at = NOW + HOUR
+    const before = w.discord.postsIn(w.threadId).length
+    const reply = await tap(w, 'u1', at)
+    expect(reply?.ephemeral).toBe(true)
+
+    expect(w.storage.declinesOf(GUILD, w.pairing.id)).toEqual([
+      { guildId: GUILD, pairingId: w.pairing.id, memberId: 'u1', declinedAt: at },
+    ])
+    expect(must(w.storage.getPairing(GUILD, w.pairing.id), 'pairing').state).toBe('time_proposed')
+    const opens = w.storage.proposalsOf(GUILD, w.pairing.id).filter((p) => p.state === 'open')
+    expect(opens.length).toBe(1)
+    const fresh = opens[0]!
+    expect(fresh.proposedBy).toBeNull()
+    expect(fresh.startUtc).toBeGreaterThanOrEqual(at + 3 * DAY)
+
+    const pending = w.storage.pendingJobs(GUILD).filter((j) => j.refId === w.pairing.id)
+    expect(pending.filter((j) => ['room-open', 'room-close', 'follow-up'].includes(j.kind))).toEqual([])
+    const release = pending.filter((j) => j.kind === 'negotiation-release')
+    expect(release.length).toBe(1)
+    expect(release[0]!.runAt).toBe(at + w.cfg.negotiationTimeoutMs)
+
+    const posts = w.discord.postsIn(w.threadId)
+    expect(posts.length).toBe(before + 1)
+    const post = posts[posts.length - 1]!
+    expect(post.content).toBe(
+      mentions(w) +
+        renderCopy(w.cfg, 'declined', {
+          who: 'Member u1',
+          old: discordTime(w.start),
+          start: discordTime(fresh.startUtc),
+        }),
+    )
+    expect(buttonIds(post).sort()).toEqual([`confirm:${fresh.id}`, `counter:${fresh.id}`].sort())
+  })
+
+  test('(c) a tap once the room is due is refused and changes nothing [M3]', async () => {
+    const w = await lockedWorld()
+    const before = w.discord.postsIn(w.threadId).length
+    const reply = await tap(w, 'u1', w.start - 600_000)
+    expect(reply?.ephemeral).toBe(true)
+    expect(reply?.content).toContain('started')
+    expect(w.storage.declinesOf(GUILD, w.pairing.id)).toEqual([])
+    expect(must(w.storage.getPairing(GUILD, w.pairing.id), 'pairing').state).toBe('locked')
+    const kinds = w.storage
+      .pendingJobs(GUILD)
+      .filter((j) => j.refId === w.pairing.id)
+      .map((j) => j.kind)
+      .sort()
+    expect(kinds).toEqual(['follow-up', 'room-close', 'room-open'])
+    expect(w.discord.postsIn(w.threadId).length).toBe(before)
+  })
+
+  test('(d) once each; a third tap after both have moved it releases the pairing [M4]', async () => {
+    const w = await lockedWorld()
+    await tap(w, 'u1', NOW + HOUR)
+    await relock(w, NOW + 2 * HOUR)
+
+    const again = await tap(w, 'u1', NOW + 3 * HOUR)
+    expect(again?.content).toContain('once')
+    expect(must(w.storage.getPairing(GUILD, w.pairing.id), 'pairing').state).toBe('locked')
+    expect(w.storage.declinesOf(GUILD, w.pairing.id).length).toBe(1)
+
+    await tap(w, 'u2', NOW + 4 * HOUR)
+    expect(w.storage.declinesOf(GUILD, w.pairing.id).length).toBe(2)
+    await relock(w, NOW + 5 * HOUR)
+
+    await tap(w, 'u1', NOW + 6 * HOUR)
+    expect(must(w.storage.getPairing(GUILD, w.pairing.id), 'pairing').state).toBe('released')
+    expect(openProposal(w)).toBeUndefined()
+    const posts = w.discord.postsIn(w.threadId)
+    expect(posts[posts.length - 1]!.content).toBe(renderCopy(w.cfg, 'released-declines'))
+  })
+
+  test('(e) an outsider, or a pairing that is not locked, gets the stale-button reply [M5]', async () => {
+    const w = await lockedWorld()
+    const outsider = await tap(w, 'u3', NOW + HOUR)
+    expect(outsider?.content).toBe(STALE_BUTTON)
+    expect(w.storage.declinesOf(GUILD, w.pairing.id)).toEqual([])
+
+    const p = await pairedWorld()
+    const early = await p.app.handle(
+      { kind: 'button', guildId: GUILD, userId: 'u1', customId: `decline:${p.pairing.id}`, channelId: p.threadId },
+      NOW + HOUR,
+    )
+    expect(early?.content).toBe(STALE_BUTTON)
+    expect(p.storage.declinesOf(GUILD, p.pairing.id)).toEqual([])
+  })
+})
