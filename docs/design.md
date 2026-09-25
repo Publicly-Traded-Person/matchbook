@@ -484,7 +484,10 @@ with autocomplete over the IANA zone database (#5). Typing `kos` offers
 Discord-native answer to a list of six hundred entries that a select menu (capped
 at 25 options) cannot hold and a free-text field would have to parse. Display uses
 Discord's `<t:epoch:F>` markdown, which every client renders in the viewer's own
-local timezone at no cost to us.
+local timezone at no cost to us. The one place that markup cannot go is a select
+menu's option labels, so the Pick another time menu is rendered by the bot in the
+picker's own zone, which it can do because the menu is ephemeral, and names the
+zone once in its placeholder (#30).
 
 **Changing timezone.** `/timezone <zone>` updates it immediately, and re-running
 `/join` with a `timezone` option does the same. Two paths to the same place,

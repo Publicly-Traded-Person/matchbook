@@ -12,6 +12,7 @@ import {
   ics,
   icsFileName,
   proposeSlots,
+  slotLabel,
 } from "../src/core/calendar"
 import type { IcsEvent, SlotOptions } from "../src/core/calendar"
 
@@ -275,5 +276,13 @@ describe("icsFileName: the summary, slugged, as the attachment name", () => {
   test("an empty or all-punctuation summary still yields a usable name", () => {
     expect(icsFileName("")).toBe("matchbook.ics")
     expect(icsFileName("<>")).toBe("matchbook.ics")
+  })
+})
+
+describe("slotLabel: a menu option in the picker's own zone (#30)", () => {
+  test("renders weekday, date and clock time in the given zone, never ISO", () => {
+    expect(slotLabel(1790467200000, "America/Los_Angeles")).toBe("Sat, Sep 26, 5:00 PM")
+    expect(slotLabel(1790467200000, "Europe/Belgrade")).toBe("Sun, Sep 27, 2:00 AM")
+    expect(slotLabel(1790467200000, "UTC")).not.toContain("T")
   })
 })

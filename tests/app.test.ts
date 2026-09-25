@@ -925,3 +925,23 @@ describe("leg (i) [#29]: Can't make it on a locked call", () => {
     expect(p.storage.declinesOf(GUILD, p.pairing.id)).toEqual([])
   })
 })
+
+// ------------------------------------------- leg (j) [#30]: the pick-another-time menu --
+
+describe('leg (j) [#30]: Pick another time labels slots in the picker\'s zone', () => {
+  test('labels read as local dates, values stay instants, the placeholder names the zone', async () => {
+    const w = await pairedWorld()
+    const reply = await w.app.handle(
+      { kind: 'button', guildId: GUILD, userId: 'u1', customId: `counter:${w.proposalId}`, channelId: w.threadId },
+      NOW + HOUR,
+    )
+    const select = must(reply?.select, 'a select menu')
+    expect(select.placeholder).toContain('UTC')
+    expect(select.options.length).toBeGreaterThan(0)
+    for (const option of select.options) {
+      expect(option.label).toMatch(/^[A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}, \d{1,2}:\d{2} (AM|PM)$/)
+      expect(option.label).not.toMatch(/\d{4}-\d{2}-\d{2}T/)
+      expect(Number.isInteger(Number(option.value))).toBe(true)
+    }
+  })
+})

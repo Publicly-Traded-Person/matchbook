@@ -49,6 +49,33 @@ function hourFormatter(timeZone: string): Intl.DateTimeFormat {
   return made
 }
 
+const labelFormatters = new Map<string, Intl.DateTimeFormat>()
+
+/**
+ * A slot for a select menu option, in the picker's own zone (#30): a menu label
+ * is plain text where Discord's <t:> markup does not render, and the menu is
+ * ephemeral, so the bot knows exactly whose eyes it is for. `Sat, Sep 26, 5:00 PM`.
+ */
+export function slotLabel(utcMs: number, timeZone: string): string {
+  let made = labelFormatters.get(timeZone)
+  if (made === undefined) {
+    made = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+    labelFormatters.set(timeZone, made)
+  }
+  // Assembled from parts, so the label does not drift with ICU's joiners
+  // (one version says `Sep 26, 5:00 PM`, another `Sep 26 at 5:00 PM`).
+  const part = new Map(made.formatToParts(new Date(utcMs)).map((p) => [p.type, p.value]))
+  const at = (type: Intl.DateTimeFormatPartTypes): string => part.get(type) ?? ''
+  return `${at('weekday')}, ${at('month')} ${at('day')}, ${at('hour')}:${at('minute')} ${at('dayPeriod')}`
+}
+
 /** The local hour (0..23) of a UTC instant in an IANA zone. */
 function localHour(ms: number, timeZone: string): number {
   return Number.parseInt(hourFormatter(timeZone).format(new Date(ms)), 10)
