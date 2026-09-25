@@ -15,7 +15,7 @@ import {
   isAvailableAt,
   orBlock,
 } from '../core/availability'
-import { alternatives } from '../core/calendar'
+import { alternatives, slotLabel } from '../core/calendar'
 import {
   answerCheckin,
   joinMember,
@@ -318,14 +318,16 @@ function handleCounter(
     return ephemeral('There is no other hour you both have free in the next ten days.')
   }
 
+  // The menu is ephemeral, so it is rendered for exactly one pair of eyes (#30).
+  const me = a.id === userId ? a : b
   const options: SelectOption[] = others.map((slot) => ({
     value: String(slot),
-    label: new Date(slot).toISOString().replace('.000Z', 'Z'),
+    label: slotLabel(slot, me.timezone),
   }))
   return ephemeral(renderCopy(cfg, 'pick-another-time'), {
     select: {
       id: customId('slot', pairing.id),
-      placeholder: 'A time you could both take',
+      placeholder: `Times in ${me.timezone}`,
       options,
       min: 1,
       max: 1,
